@@ -7,18 +7,23 @@ import { MarketDataService } from '../services/market-data.service';
   styleUrls: ['./home.page.scss'],
 })
 export class HomePage implements OnInit {
-  marketData: any[] = []; // Make sure it's an array type
+  marketData: any[] = [];
+  currentIndex: number = -1;
+
+  // State variables for tracking position
+  position: 'long' | 'short' | null = null; // To track user's position
+  entryPrice: number | null = null; // The price at which the user enters a position
+  pnl: number = 0; // Track profit or loss for the position
 
   constructor(private marketDataService: MarketDataService) {}
 
-  ngOnInit() {
-  }
+  ngOnInit() {}
 
   fetchMarketData() {
     this.marketDataService.getRandomDayData().subscribe({
       next: (data) => {
         this.marketData = data;
-        console.log(this.marketData); // Log the data to verify it's being fetched
+        this.currentIndex = -1; // Reset index when new data is fetched
       },
       error: (error) => {
         console.error('Error fetching market data:', error);
