@@ -1,6 +1,12 @@
 import { Component, OnInit } from '@angular/core';
 import { MarketDataService } from '../services/market-data.service';
 
+enum PositionState {
+  None,
+  Long,
+  Short
+}
+
 @Component({
   selector: 'app-home',
   templateUrl: './home.page.html',
@@ -11,9 +17,9 @@ export class HomePage implements OnInit {
   currentIndex: number = -1;
 
   // State variables for tracking position
-  position: 'long' | 'short' | null = null; // To track user's position
-  entryPrice: number | null = null; // The price at which the user enters a position
-  pnl: number = 0; // Track profit or loss for the position
+  position: PositionState = PositionState.None;
+  entryPrice: number | null = null;
+  pnl: number = 0;
 
   constructor(private marketDataService: MarketDataService) {}
 
@@ -23,7 +29,10 @@ export class HomePage implements OnInit {
     this.marketDataService.getRandomDayData().subscribe({
       next: (data) => {
         this.marketData = data;
-        this.currentIndex = -1; // Reset index when new data is fetched
+        this.currentIndex = -1; 
+        this.position = PositionState.None;
+        this.entryPrice = null; 
+        this.pnl = 0; 
       },
       error: (error) => {
         console.error('Error fetching market data:', error);
@@ -32,5 +41,27 @@ export class HomePage implements OnInit {
         console.log('Market data fetch completed.');
       },
     });
+  }
+
+  enterLong() {
+    if (this.currentIndex >= 0) {
+      this.position = PositionState.Long;
+      this.entryPrice = this.marketData[this.currentIndex].close;
+      console.log('Entered long position at price:', this.entryPrice);
+    }
+  }
+
+  enterShort() {
+    if (this.currentIndex >= 0) {
+      this.position = PositionState.Short;
+      this.entryPrice = this.marketData[this.currentIndex].close;
+      console.log('Entered short position at price:', this.entryPrice);
+    }
+  }
+
+  exitPosition() {
+    this.position = PositionState.None;
+    this.entryPrice = null;
+    console.log('Exited position');
   }
 }
