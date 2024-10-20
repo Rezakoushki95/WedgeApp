@@ -1,20 +1,24 @@
-<ion-header [translucent]="true">
+<ion-header>
   <ion-toolbar>
-    <ion-title>
-      Blank
-    </ion-title>
+    <ion-title>Market Data Viewer</ion-title>
   </ion-toolbar>
 </ion-header>
 
-<ion-content [fullscreen]="true">
-  <ion-header collapse="condense">
-    <ion-toolbar>
-      <ion-title size="large">Blank</ion-title>
-    </ion-toolbar>
-  </ion-header>
+<ion-content>
+  <ion-button expand="full" (click)="fetchMarketData()"
+    >Fetch Market Data</ion-button
+  >
+  <div *ngIf="marketData.length > 0">
+    <h2>Market Data for Random Day</h2>
+    <div *ngFor="let data of marketData">
+      <p>
+        {{ data.time }} - Open: {{ data.open }}, High: {{ data.high }}, Low: {{
+        data.low }}, Close: {{ data.close }}
+      </p>
+    </div>
+  </div>
 
-  <div id="container">
-    <strong>Ready to create an app?</strong>
-    <p>Start with Ionic <a target="_blank" rel="noopener noreferrer" href="https://ionicframework.com/docs/components">UI Components</a></p>
+  <div *ngIf="marketData.length === 0">
+    <p>No data available. Please click the button to fetch data.</p>
   </div>
 </ion-content>
