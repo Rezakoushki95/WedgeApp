@@ -1,59 +1,59 @@
 <ion-header>
   <ion-toolbar>
-    <ion-title>Market Data Viewer</ion-title>
+    <ion-title>S&P 500</ion-title>
   </ion-toolbar>
 </ion-header>
 
 <ion-content>
-  <ion-button
-    expand="full"
-    (click)="nextBar()"
-    [disabled]="currentIndex >= marketData.length - 1"
-    >Next Bar</ion-button
-  >
-
-  <div *ngIf="currentIndex >= 0">
-    <h2>Current Bar</h2>
-    <p>
-      {{ marketData[currentIndex].time }} - Open: {{
-      marketData[currentIndex].open }}, High: {{ marketData[currentIndex].high
-      }}, Low: {{ marketData[currentIndex].low }}, Close: {{
-      marketData[currentIndex].close }}
-    </p>
-
-    <ion-button
-      color="success"
-      expand="full"
-      (click)="enterLong()"
-      [disabled]="position !== PositionState.None"
-      >Go Long</ion-button
-    >
-
-    <ion-button
-      color="danger"
-      expand="full"
-      (click)="enterShort()"
-      [disabled]="position !== PositionState.None"
-      >Go Short</ion-button
-    >
-
-    <ion-button
-      expand="full"
-      (click)="exitPosition()"
-      [disabled]="position === PositionState.None"
-      >Exit Position</ion-button
-    >
-
-    <div *ngIf="position !== PositionState.None">
-      <h3>
-        Position: {{ position === PositionState.Long ? 'Long' : 'Short' }}
-      </h3>
-      <p>Entry Price: {{ entryPrice }}</p>
-      <p>Current P&L: {{ pnl | number:'1.2-2' }}</p>
-    </div>
+  <!-- Daily P&L and Positions Display -->
+  <div class="stats-container">
+    <h3>Daily P&L: {{ dailyProfitLoss | number:'1.2-2' }}</h3>
+    <h3>Positions Taken: {{ positionsTaken }}</h3>
   </div>
 
-  <div *ngIf="marketData.length === 0">
-    <p>Loading market data...</p>
+  <!-- Current Bar Information -->
+  <div class="current-bar-container" *ngIf="currentBarIndex >= 0">
+    <h2>Current Bar</h2>
+    <p>
+      {{ marketData[currentBarIndex].time }} - Open: {{
+      marketData[currentBarIndex].open }}, High: {{
+      marketData[currentBarIndex].high }}, Low: {{
+      marketData[currentBarIndex].low }}, Close: {{
+      marketData[currentBarIndex].close }}
+    </p>
+  </div>
+
+  <!-- Button Container -->
+  <div class="button-container">
+    <ion-button
+      expand="block"
+      (click)="nextBar()"
+      [disabled]="currentBarIndex >= marketData.length - 1"
+      >Next Bar</ion-button
+    >
+  </div>
+
+  <!-- Position Action Buttons -->
+  <div class="position-action-container">
+    <ion-button
+      color="success"
+      expand="block"
+      (click)="enterLong()"
+      [disabled]="hasOpenPosition"
+      >Long</ion-button
+    >
+    <ion-button
+      color="danger"
+      expand="block"
+      (click)="enterShort()"
+      [disabled]="hasOpenPosition"
+      >Short</ion-button
+    >
+    <ion-button
+      expand="block"
+      (click)="exitPosition()"
+      [disabled]="!hasOpenPosition"
+      >Exit</ion-button
+    >
   </div>
 </ion-content>

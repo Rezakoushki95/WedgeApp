@@ -1,11 +1,18 @@
 import { Component, OnInit } from '@angular/core';
 import { MarketDataService } from '../services/market-data.service';
 
-// Enum for Position State
-enum PositionState {
+export enum PositionState {
   None,
   Long,
-  Short
+  Short,
+}
+
+interface MarketData {
+  time: string;
+  open: number;
+  high: number;
+  low: number;
+  close: number;
 }
 
 @Component({
@@ -14,13 +21,13 @@ enum PositionState {
   styleUrls: ['./home.page.scss'],
 })
 export class HomePage implements OnInit {
-  marketData: any[] = [];
-  currentIndex: number = -1;
+  marketData: MarketData[] = [];
+  currentBarIndex: number = -1;
 
-  // State variables for tracking position
   position: PositionState = PositionState.None;
   entryPrice: number | null = null;
-  pnl: number = 0;
+  dailyProfitLoss: number = 0;
+  positionsTaken: number = 0;
 
   constructor(private marketDataService: MarketDataService) {}
 
@@ -28,73 +35,61 @@ export class HomePage implements OnInit {
     this.fetchMarketData();
   }
 
-  // Getter to make PositionState accessible in the template
-  get PositionState() {
-    return PositionState;
+  get hasOpenPosition(): boolean {
+    return this.position !== PositionState.None;
   }
 
   fetchMarketData() {
     this.marketDataService.getRandomDayData().subscribe({
-      next: (data) => {
+      next: (data: MarketData[]) => {
         this.marketData = data;
-        this.currentIndex = 0; // Set to 0 to display the first bar immediately
-        this.position = PositionState.None;
-        this.entryPrice = null;
-        this.pnl = 0;
+        this.currentBarIndex = 0;
       },
       error: (error) => {
         console.error('Error fetching market data:', error);
+        // Consider showing an error toast here
       },
       complete: () => {
         console.log('Market data fetch completed.');
       },
     });
   }
-  
+
+  nextBar() {
+    if (this.currentBarIndex < this.marketData.length - 1) {
+      this.currentBarIndex++;
+      this.updatePnL();
+    }
+  }
 
   enterLong() {
-    if (this.currentIndex >= 0) {
+    if (!this.hasOpenPosition && this.currentBarIndex >= 0) {
       this.position = PositionState.Long;
-      this.entryPrice = this.marketData[this.currentIndex].close;
-      console.log('Entered long position at price:', this.entryPrice);
+      this.entryPrice = this.marketData[this.currentBarIndex].close;
+      this.positionsTaken++;
     }
   }
 
   enterShort() {
-    if (this.currentIndex >= 0) {
+    if (!this.hasOpenPosition && this.currentBarIndex >= 0) {
       this.position = PositionState.Short;
-      this.entryPrice = this.marketData[this.currentIndex].close;
-      console.log('Entered short position at price:', this.entryPrice);
+      this.entryPrice = this.marketData[this.currentBarIndex].close;
+      this.positionsTaken++;
     }
   }
 
   exitPosition() {
-    this.position = PositionState.None;
-    this.entryPrice = null;
-    console.log('Exited position');
-  }
-
-  nextBar() {
-    if (this.currentIndex < this.marketData.length - 1) {
-      this.currentIndex++;
-  
-      // If user has an open position, calculate P&L
-      if (this.position !== PositionState.None && this.entryPrice !== null) {
-        const currentPrice = this.marketData[this.currentIndex].close;
-  
-        if (this.position === PositionState.Long) {
-          this.pnl = currentPrice - this.entryPrice;
-        } else if (this.position === PositionState.Short) {
-          this.pnl = this.entryPrice - currentPrice;
-        }
-  
-        console.log('Updated P&L:', this.pnl);
-      }
-    } else {
-      console.log('No more data available.');
+    if (this.hasOpenPosition) {
+      this.updatePnL();
+      this.position = PositionState.None;
+      this.entryPrice = null;
     }
   }
-  
 
-  
+  updatePnL() {
+    if (this.hasOpenPosition && this.entryPrice !== null && this.currentBarIndex >= 0) {
+      const currentPrice = this.marketData[this.currentBarIndex].close;
+      this.dailyProfitLoss += this.position === PositionState.Long ? currentPrice - this.entryPrice : this.entryPrice - currentPrice;
+    }
+  }
 }

@@ -1,27 +1,44 @@
-#container {
-  text-align: center;
+:root {
+  --padding-size: 1.5%; // Relative padding for more flexibility
+  --font-size: 1rem;    // Base font size
+  --border-color: #ccc; // Border color for components
+}
 
-  position: absolute;
+.stats-container {
+  display: flex;
+  justify-content: space-between;
+  padding: var(--padding-size);
+  background-color: #ffffff;
+  border-bottom: 0.1rem solid var(--border-color);
+  font-size: var(--font-size);
+}
+
+.current-bar-container {
+  text-align: center;
+  padding: var(--padding-size);
+  font-size: calc(var(--font-size) * 1.2); // Slightly larger for better visibility
+}
+
+.button-container {
+  position: fixed;
+  bottom: 15vh; // Set relative to viewport height to maintain a consistent distance from the bottom
   left: 0;
   right: 0;
-  top: 50%;
-  transform: translateY(-50%);
+  padding: var(--padding-size);
 }
 
-#container strong {
-  font-size: 20px;
-  line-height: 26px;
+.position-action-container {
+  position: fixed;
+  bottom: 1vh; // Use viewport units to make sure it stays consistent across screen sizes
+  left: 0;
+  right: 0;
+  padding: var(--padding-size);
+  display: flex;
+  justify-content: space-around;
 }
 
-#container p {
-  font-size: 16px;
-  line-height: 22px;
-
-  color: #8c8c8c;
-
-  margin: 0;
-}
-
-#container a {
-  text-decoration: none;
+ion-button {
+  font-size: calc(var(--font-size) * 1.1);
+  padding: 1em;
+  border-radius: 0.5em; // Make buttons more touch-friendly
 }
