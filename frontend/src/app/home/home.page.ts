@@ -24,7 +24,9 @@ export class HomePage implements OnInit {
 
   constructor(private marketDataService: MarketDataService) {}
 
-  ngOnInit() {}
+  ngOnInit() {
+    this.fetchMarketData();
+  }
 
   // Getter to make PositionState accessible in the template
   get PositionState() {
@@ -35,7 +37,7 @@ export class HomePage implements OnInit {
     this.marketDataService.getRandomDayData().subscribe({
       next: (data) => {
         this.marketData = data;
-        this.currentIndex = -1;
+        this.currentIndex = 0; // Set to 0 to display the first bar immediately
         this.position = PositionState.None;
         this.entryPrice = null;
         this.pnl = 0;
@@ -48,6 +50,7 @@ export class HomePage implements OnInit {
       },
     });
   }
+  
 
   enterLong() {
     if (this.currentIndex >= 0) {
