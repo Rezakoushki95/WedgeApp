@@ -37,6 +37,15 @@
   justify-content: space-around;
 }
 
+.position-action-container ion-button {
+  flex: 1; // Make each button take equal width
+  text-align: center;
+  padding: 1em;
+  font-size: calc(var(--font-size) * 1.1);
+  border-radius: 0.5em; // Make buttons more touch-friendly
+  max-width: 30%; // Ensure that buttons do not take too much space on large screens
+}
+
 ion-button {
   font-size: calc(var(--font-size) * 1.1);
   padding: 1em;
