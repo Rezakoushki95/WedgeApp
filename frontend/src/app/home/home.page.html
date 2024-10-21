@@ -8,13 +8,51 @@
   <ion-button expand="full" (click)="fetchMarketData()"
     >Fetch Market Data</ion-button
   >
-  <div *ngIf="marketData.length > 0">
-    <h2>Market Data for Random Day</h2>
-    <div *ngFor="let data of marketData">
-      <p>
-        {{ data.time }} - Open: {{ data.open }}, High: {{ data.high }}, Low: {{
-        data.low }}, Close: {{ data.close }}
-      </p>
+  <ion-button
+    expand="full"
+    (click)="nextBar()"
+    [disabled]="currentIndex >= marketData.length - 1"
+    >Next Bar</ion-button
+  >
+
+  <div *ngIf="currentIndex >= 0">
+    <h2>Current Bar</h2>
+    <p>
+      {{ marketData[currentIndex].time }} - Open: {{
+      marketData[currentIndex].open }}, High: {{ marketData[currentIndex].high
+      }}, Low: {{ marketData[currentIndex].low }}, Close: {{
+      marketData[currentIndex].close }}
+    </p>
+
+    <ion-button
+      color="success"
+      expand="full"
+      (click)="enterLong()"
+      [disabled]="position !== PositionState.None"
+      >Go Long</ion-button
+    >
+
+    <ion-button
+      color="danger"
+      expand="full"
+      (click)="enterShort()"
+      [disabled]="position !== PositionState.None"
+      >Go Short</ion-button
+    >
+
+    <ion-button
+      expand="full"
+      (click)="exitPosition()"
+      [disabled]="position === PositionState.None"
+      >Exit Position</ion-button
+    >
+
+    <div *ngIf="position !== PositionState.None">
+      <h3>
+        Position: {{ position === PositionState.Long ? 'Long' : 'Short' }}
+      </h3>
+      <p>Entry Price: {{ entryPrice }}</p>
+      <p>Current P&L: {{ pnl | number:'1.2-2' }}</p>
     </div>
   </div>
 

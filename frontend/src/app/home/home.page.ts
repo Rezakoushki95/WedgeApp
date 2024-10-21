@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { MarketDataService } from '../services/market-data.service';
 
+// Enum for Position State
 enum PositionState {
   None,
   Long,
@@ -25,14 +26,19 @@ export class HomePage implements OnInit {
 
   ngOnInit() {}
 
+  // Getter to make PositionState accessible in the template
+  get PositionState() {
+    return PositionState;
+  }
+
   fetchMarketData() {
     this.marketDataService.getRandomDayData().subscribe({
       next: (data) => {
         this.marketData = data;
-        this.currentIndex = -1; 
+        this.currentIndex = -1;
         this.position = PositionState.None;
-        this.entryPrice = null; 
-        this.pnl = 0; 
+        this.entryPrice = null;
+        this.pnl = 0;
       },
       error: (error) => {
         console.error('Error fetching market data:', error);
@@ -64,4 +70,28 @@ export class HomePage implements OnInit {
     this.entryPrice = null;
     console.log('Exited position');
   }
+
+  nextBar() {
+    if (this.currentIndex < this.marketData.length - 1) {
+      this.currentIndex++;
+  
+      // If user has an open position, calculate P&L
+      if (this.position !== PositionState.None && this.entryPrice !== null) {
+        const currentPrice = this.marketData[this.currentIndex].close;
+  
+        if (this.position === PositionState.Long) {
+          this.pnl = currentPrice - this.entryPrice;
+        } else if (this.position === PositionState.Short) {
+          this.pnl = this.entryPrice - currentPrice;
+        }
+  
+        console.log('Updated P&L:', this.pnl);
+      }
+    } else {
+      console.log('No more data available.');
+    }
+  }
+  
+
+  
 }
