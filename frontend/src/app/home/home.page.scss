@@ -2,15 +2,18 @@
   --padding-size: 1.5%; // Relative padding for more flexibility
   --font-size: 1rem;    // Base font size
   --border-color: #ccc; // Border color for components
+  --margin-size: 2%;
 }
 
 .stats-container {
   display: flex;
   justify-content: space-between;
   padding: var(--padding-size);
+  margin: auto;
   background-color: #ffffff;
   border-bottom: 0.1rem solid var(--border-color);
   font-size: var(--font-size);
+  width: 96%;
 }
 
 .current-bar-container {
