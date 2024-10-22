@@ -1,7 +1,6 @@
 :root {
   --padding-size: 1.5%; // Relative padding for more flexibility
   --font-size: 1rem;    // Base font size
-  --border-color: #ccc; // Border color for components
   --margin-size: 2%;
 }
 
@@ -10,31 +9,18 @@
   justify-content: space-between;
   padding: var(--padding-size);
   margin: auto;
-  background-color: #ffffff;
-  border-bottom: 0.1rem solid var(--border-color);
   font-size: var(--font-size);
   width: 96%;
 }
 
 .current-bar-container {
-  padding: var(--padding-size);
   font-size: calc(var(--font-size) * 1.2); // Slightly larger for better visibility
   height: 60vh; // Takes up 60% of the viewport height to maximize space for the graph
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  box-sizing: border-box; // Include padding in height and width calculations
   text-align: center;
-}
-
-.current-bar-container h2 {
-  margin-bottom: 1rem; // Add space below the "Current Bar" title
-}
-
-.current-bar-container p {
-  line-height: 1.5; // Increase line height for better readability
-  margin: 0.5rem 0; // Add some vertical spacing to the paragraph
 }
 
 .button-container {
@@ -42,30 +28,27 @@
   bottom: 15vh; // Set relative to viewport height to maintain a consistent distance from the bottom
   left: 0;
   right: 0;
-  padding: var(--padding-size);
 }
 
-.position-action-container {
+.position-action-grid {
   position: fixed;
-  bottom: 1vh; // Use viewport units to make sure it stays consistent across screen sizes
+  bottom: 1vh; // Set relative to viewport height to ensure it stays at the bottom of the viewport
   left: 0;
   right: 0;
   padding: var(--padding-size);
-  display: flex;
-  justify-content: space-around;
+  width: 100%; // Ensure the grid takes up the full width of the viewport
 }
 
-.position-action-container ion-button {
-  flex: 1; // Make each button take equal width
-  text-align: center;
-  padding: 1em;
-  font-size: calc(var(--font-size) * 1.1);
-  border-radius: 0.5em; // Make buttons more touch-friendly
-  max-width: 30%; // Ensure that buttons do not take too much space on large screens
+.position-action-row {
+  justify-content: space-around; // Distribute columns evenly across the row
 }
 
 ion-button {
   font-size: calc(var(--font-size) * 1.1);
   padding: 1em;
   border-radius: 0.5em; // Make buttons more touch-friendly
+}
+
+.position-action-row ion-col {
+  max-width: 30%; // Ensure buttons do not take up too much space on large screens
 }

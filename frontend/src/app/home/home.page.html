@@ -7,8 +7,8 @@
 <ion-content>
   <!-- Daily P&L and Positions Display -->
   <div class="stats-container">
-    <h3>Daily P&L: {{ dailyProfitLoss | number:'1.2-2' }}</h3>
-    <h3>Positions Taken: {{ positionsTaken }}</h3>
+    <h3>Realized P&L: {{ dailyProfitLoss | number:'1.2-2' }}</h3>
+    <h3># of Orders: {{ positionsTaken }}</h3>
   </div>
 
   <!-- Current Bar Information -->
@@ -33,27 +33,35 @@
     >
   </div>
 
-  <!-- Position Action Buttons -->
-  <div class="position-action-container">
-    <ion-button
-      color="success"
-      expand="block"
-      (click)="enterLong()"
-      [disabled]="hasOpenPosition"
-      >Long</ion-button
-    >
-    <ion-button
-      color="danger"
-      expand="block"
-      (click)="enterShort()"
-      [disabled]="hasOpenPosition"
-      >Short</ion-button
-    >
-    <ion-button
-      expand="block"
-      (click)="exitPosition()"
-      [disabled]="!hasOpenPosition"
-      >Exit</ion-button
-    >
-  </div>
+  <!-- Position Action Buttons using Ionic Grid -->
+  <ion-grid class="position-action-grid">
+    <ion-row class="position-action-row">
+      <ion-col>
+        <ion-button
+          color="success"
+          expand="block"
+          (click)="enterLong()"
+          [disabled]="hasOpenPosition"
+          >Long</ion-button
+        >
+      </ion-col>
+      <ion-col>
+        <ion-button
+          color="danger"
+          expand="block"
+          (click)="enterShort()"
+          [disabled]="hasOpenPosition"
+          >Short</ion-button
+        >
+      </ion-col>
+      <ion-col>
+        <ion-button
+          expand="block"
+          (click)="exitPosition()"
+          [disabled]="!hasOpenPosition"
+          >Exit</ion-button
+        >
+      </ion-col>
+    </ion-row>
+  </ion-grid>
 </ion-content>
