@@ -1,4 +1,51 @@
 :root {
+  --padding-size: 1.5%;
+  --font-size: 1rem;
+  --margin-size: 2%;
+}
+
+
+.stats-grid {
+  padding: var(--padding-size);
+  margin: 1% auto 0% auto;
+  font-size: 1.1rem;
+  text-align: center;
+}
+
+.chart-placeholder {
+  background-color: #b6b6b6; /* Light grey background to indicate the chart area */
+  height: 60vh; /* Takes up 60% of the viewport height to prioritize its visibility */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: #ffffff; /* Light color for placeholder text */
+  font-size: 1.2rem; /* Slightly larger text for visibility */
+}
+
+.open-order-grid ion-row {
+  align-items: center;
+}
+
+.order-info-label {
+  display: block;
+  font-size: 1.1rem; /* Consistent font size */
+  margin-bottom: 0.25rem; /* Space between labels */
+  margin-top: 0.25rem;
+}
+
+.action-buttons-col {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.action-button {
+  flex: 1;
+}
+
+
+
+/* :root {
   --padding-size: 1.5%; // Relative padding for more flexibility
   --font-size: 1rem;    // Base font size
   --margin-size: 2%;
@@ -52,3 +99,12 @@ ion-button {
 .position-action-row ion-col {
   max-width: 30%; // Ensure buttons do not take up too much space on large screens
 }
+
+.order-info-container {
+    padding: var(--padding-size);
+    font-size: var(--font-size);
+    display: flex;
+    align-items: center;
+  
+  
+} */
