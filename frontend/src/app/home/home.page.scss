@@ -10,6 +10,8 @@ ion-content::part(scroll) {
   overflow-x: hidden; /* Removes horizontal scroll if needed */
   display: flex;
   flex-direction: column;
+  padding-top: 1% !important;
+  padding-bottom: 1% !important
 }
 
 
@@ -48,11 +50,22 @@ ion-content::part(scroll) {
   font-size: 1.2rem;
 }
 
-/* Order Info Labels */
-.order-info-label {
+.order-info-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   font-size: 1.1rem;
-  // margin: 0.25rem 0;
 }
+
+.order-info-label {
+  width: 150px;
+}
+
+.footer-grid {
+  padding-top: 0;
+}
+
 
 /* Remove Action Buttons Column Class
    Now using Ionic Utilities for Flexbox instead of custom CSS */
