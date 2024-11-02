@@ -4,39 +4,55 @@
   --margin-size: 2%;
 }
 
+// remove scrolling
+ion-content::part(scroll) {
+  overflow-y: hidden; /* Removes vertical scroll */
+  overflow-x: hidden; /* Removes horizontal scroll if needed */
+  display: flex;
+  flex-direction: column;
+}
+
+
+/* Stats Grid */
 .stats-grid {
-  padding: var(--padding-size);
-  margin: 1% auto 0% auto;
+  padding: 0;
+  margin: 0;
   font-size: 1.1rem;
-  text-align: center;
+  text-align: center;   
+  flex-grow: 0;
+
+  ion-row ion-col {
+      padding: 0;
+  
+  }
 }
 
 .chart-grid {
+  padding: 0;
   flex-grow: 1;
-  height: calc(100vh - 56px - 20%); /* Remaining height after header and footer (approximately 20% reserved for the footer) */
+  margin: 0;
+
+  ion-row {
+    height: 100%;
+  }
 }
 
+/* Chart Placeholder */
 .chart-placeholder {
   background-color: #b6b6b6; 
+  height: 100%;
   display: flex;
   justify-content: center;
   align-items: center;
   color: #ffffff; 
-  font-size: 1.2rem; 
+  font-size: 1.2rem;
 }
 
-.footer-grid {
-  padding: var(--padding-size);
-  width: 100%;
-}
-
+/* Order Info Labels */
 .order-info-label {
-  display: block;
-  font-size: 1.1rem; 
-  margin-bottom: 0.25rem; 
-  margin-top: 0.25rem;
+  font-size: 1.1rem;
+  // margin: 0.25rem 0;
 }
-
 
 /* Remove Action Buttons Column Class
    Now using Ionic Utilities for Flexbox instead of custom CSS */
