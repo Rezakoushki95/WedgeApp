@@ -22,7 +22,13 @@
   <ion-grid class="chart-grid">
     <ion-row>
       <ion-col>
-        <div class="chart-placeholder">Chart Placeholder</div>
+        <div class="chart-placeholder" *ngIf="marketData.length > 0">
+          <p>Time: {{ marketData[currentBarIndex].time }}</p>
+          <p>Open: {{ marketData[currentBarIndex].open }}</p>
+          <p>High: {{ marketData[currentBarIndex].high }}</p>
+          <p>Low: {{ marketData[currentBarIndex].low }}</p>
+          <p>Close: {{ marketData[currentBarIndex].close }}</p>
+        </div>
       </ion-col>
     </ion-row>
   </ion-grid>
