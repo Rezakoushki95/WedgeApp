@@ -1,7 +1,9 @@
+using backend.Services;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-builder.Services.AddControllers(); // <-- Add this line to enable controllers
+builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
@@ -10,10 +12,16 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowSpecificOrigins",
         builder => builder
-            .WithOrigins("http://localhost:8100") // Replace this with your frontend URL
+            .WithOrigins("http://localhost:8100")
             .AllowAnyMethod()
             .AllowAnyHeader());
 });
+
+// Register HttpClient for MarketDataService
+builder.Services.AddHttpClient<MarketDataService>();
+
+// Register MarketDataService
+builder.Services.AddSingleton<MarketDataService>();
 
 var app = builder.Build();
 
@@ -24,15 +32,9 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-// app.UseHttpsRedirection();
-
-app.UseRouting(); // <-- Add this line for routing
-
-// Enable CORS
+app.UseRouting();
 app.UseCors("AllowSpecificOrigins");
-
-app.UseAuthorization(); // <-- Add this line for authorization if needed
-
-app.MapControllers(); // <-- Add this line to map attribute-defined controllers (like MarketDataController)
-
+app.UseAuthorization();
+app.MapControllers();
 app.Run();
+

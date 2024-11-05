@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using Newtonsoft.Json;
 using backend.Models;
+using backend.Services;
 
 namespace backend.Controllers
 {
@@ -11,6 +12,14 @@ namespace backend.Controllers
     [ApiController]
     public class MarketDataController : ControllerBase
     {
+
+        private readonly MarketDataService _marketDataService;
+
+        public MarketDataController(MarketDataService marketDataService)
+        {
+            _marketDataService = marketDataService;
+        }
+
         [HttpGet("randomday")]
         public ActionResult<IEnumerable<FiveMinuteBar>> GetRandomDayData()
         {
@@ -53,6 +62,13 @@ namespace backend.Controllers
             {
                 return StatusCode(500, "Internal server error: " + ex.Message);
             }
+        }
+
+        [HttpGet("test-parsing")]
+        public async Task<IActionResult> TestParsing()
+        {
+            await _marketDataService.LoadMonthlyData();
+            return Ok("Parsing test completed. Check console output for data sample.");
         }
     }
 
