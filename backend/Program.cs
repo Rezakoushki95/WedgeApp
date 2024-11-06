@@ -1,4 +1,6 @@
+using backend.Data;
 using backend.Services;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -16,6 +18,10 @@ builder.Services.AddCors(options =>
             .AllowAnyMethod()
             .AllowAnyHeader());
 });
+
+// Register the DbContext with SQLite
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseSqlite("Data Source=WedgeApp.db"));
 
 // Register HttpClient for MarketDataService
 builder.Services.AddHttpClient<MarketDataService>();
