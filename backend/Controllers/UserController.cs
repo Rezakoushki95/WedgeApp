@@ -3,6 +3,7 @@ using backend.Data;
 using System.Security.Cryptography;
 using System.Text;
 using Microsoft.EntityFrameworkCore;
+using backend.DTOs;
 
 
 namespace backend.Controllers
@@ -40,6 +41,31 @@ namespace backend.Controllers
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
             return Ok("User registered successfully.");
+        }
+
+        [HttpPost("login")]
+        public async Task<IActionResult> Login([FromBody] LoginDTO login)
+        {
+            if (string.IsNullOrWhiteSpace(login.Username) || string.IsNullOrWhiteSpace(login.Password))
+            {
+                return BadRequest("Username and password are required.");
+            }
+
+            // Find the user by username
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Username == login.Username);
+            if (user == null)
+            {
+                return Unauthorized("Invalid username");
+            }
+
+            // Hash the password provided and compare with the stored hash
+            var hashedPassword = HashPassword(login.Password);
+            if (user.PasswordHash != hashedPassword)
+            {
+                return Unauthorized("Invalid password.");
+            }
+
+            return Ok("Login successful.");
         }
 
         private async Task<bool> UsernameExists(string username)
