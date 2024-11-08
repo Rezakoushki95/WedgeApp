@@ -4,6 +4,7 @@ using System.Security.Cryptography;
 using System.Text;
 using Microsoft.EntityFrameworkCore;
 using backend.DTOs;
+using backend.Models;
 
 
 namespace backend.Controllers
@@ -79,6 +80,17 @@ namespace backend.Controllers
             var bytes = Encoding.UTF8.GetBytes(password);
             var hash = sha256.ComputeHash(bytes);
             return Convert.ToBase64String(hash);
+        }
+
+        [HttpGet("trading-session")]
+        public async Task<IActionResult> GetTradingSession(int userId)
+        {
+            var tradingSession = await _context.TradingSessions.FirstOrDefaultAsync(ts => ts.UserId == userId);
+            if (tradingSession == null)
+            {
+                return NotFound("No trading session found for this user.");
+            }
+            return Ok(tradingSession);
         }
     }
 }
