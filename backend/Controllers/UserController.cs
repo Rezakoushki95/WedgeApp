@@ -41,6 +41,23 @@ namespace backend.Controllers
             user.PasswordHash = HashPassword(user.PasswordHash);
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
+
+            // Create a new TradingSession for the user
+            var tradingSession = new TradingSession
+            {
+                UserId = user.Id,
+                Instrument = "S&P 500",
+                TradingDay = DateTime.Today.ToString("yyyy-MM-dd"),
+                CurrentBarIndex = 0,
+                HasOpenOrder = false,
+                EntryPrice = null,
+                CurrentProfitLoss = null,
+                TotalProfitLoss = 0,
+                TotalOrders = 0
+            };
+            _context.TradingSessions.Add(tradingSession);
+            await _context.SaveChangesAsync();
+
             return Ok("User registered successfully.");
         }
 

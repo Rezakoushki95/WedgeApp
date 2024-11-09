@@ -27,7 +27,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 builder.Services.AddHttpClient<MarketDataService>();
 
 // Register MarketDataService
-builder.Services.AddSingleton<MarketDataService>();
+builder.Services.AddScoped<MarketDataService>();
 
 var app = builder.Build();
 

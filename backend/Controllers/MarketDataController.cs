@@ -64,12 +64,20 @@ namespace backend.Controllers
             }
         }
 
-        [HttpGet("test-parsing")]
-        public async Task<IActionResult> TestParsing()
+        [HttpPost("fetch-data")]
+        public async Task<IActionResult> FetchAndSaveData(int sessionId)
         {
-            await _marketDataService.LoadMonthlyData();
-            return Ok("Parsing test completed. Check console output for data sample.");
+            await _marketDataService.FetchAndSaveMonthlyData(sessionId);
+            return Ok("Data fetched and saved successfully.");
         }
+
+
+        // [HttpGet("test-parsing")]
+        // public async Task<IActionResult> TestParsing()
+        // {
+        //     await _marketDataService.LoadMonthlyData();
+        //     return Ok("Parsing test completed. Check console output for data sample.");
+        // }
     }
 
 }
