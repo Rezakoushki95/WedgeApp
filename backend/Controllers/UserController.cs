@@ -6,7 +6,6 @@ using Microsoft.EntityFrameworkCore;
 using backend.DTOs;
 using backend.Models;
 
-
 namespace backend.Controllers
 {
     [Route("api/[controller]")]
@@ -40,22 +39,6 @@ namespace backend.Controllers
 
             user.PasswordHash = HashPassword(user.PasswordHash);
             _context.Users.Add(user);
-            await _context.SaveChangesAsync();
-
-            // Create a new TradingSession for the user
-            var tradingSession = new TradingSession
-            {
-                UserId = user.Id,
-                Instrument = "S&P 500",
-                TradingDay = DateTime.Today.ToString("yyyy-MM-dd"),
-                CurrentBarIndex = 0,
-                HasOpenOrder = false,
-                EntryPrice = null,
-                CurrentProfitLoss = null,
-                TotalProfitLoss = 0,
-                TotalOrders = 0
-            };
-            _context.TradingSessions.Add(tradingSession);
             await _context.SaveChangesAsync();
 
             return Ok("User registered successfully.");
@@ -97,6 +80,34 @@ namespace backend.Controllers
             var bytes = Encoding.UTF8.GetBytes(password);
             var hash = sha256.ComputeHash(bytes);
             return Convert.ToBase64String(hash);
+        }
+
+        [HttpPost("start-session")]
+        public async Task<IActionResult> StartTradingSession(int userId)
+        {
+            // Check if the user exists
+            var user = await _context.Users.FindAsync(userId);
+            if (user == null)
+            {
+                return NotFound("User not found.");
+            }
+
+            // Create a new TradingSession when the user starts a session
+            var tradingSession = new TradingSession
+            {
+                UserId = user.Id,
+                Instrument = "S&P 500",
+                CurrentBarIndex = 0,
+                HasOpenOrder = false,
+                EntryPrice = null,
+                CurrentProfitLoss = null,
+                TotalProfitLoss = 0,
+                TotalOrders = 0
+            };
+            _context.TradingSessions.Add(tradingSession);
+            await _context.SaveChangesAsync();
+
+            return Ok("Trading session started successfully.");
         }
 
         [HttpGet("trading-session")]

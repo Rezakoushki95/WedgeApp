@@ -11,6 +11,11 @@ public class User
     public int TotalOrders { get; set; }
     public int TotalTradingDays { get; set; }
 
-    // Navigation property for current TradingSession
+    // Navigation property for the current TradingSession
     public TradingSession? CurrentTradingSession { get; set; }
+
+    // Navigation properties for accessed data
+    public ICollection<AccessedDay> AccessedDays { get; set; } = new List<AccessedDay>();
+    public ICollection<AccessedMonth> AccessedMonths { get; set; } = new List<AccessedMonth>();
 }
+

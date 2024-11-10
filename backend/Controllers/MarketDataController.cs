@@ -1,9 +1,4 @@
 using Microsoft.AspNetCore.Mvc;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using Newtonsoft.Json;
-using backend.Models;
 using backend.Services;
 
 namespace backend.Controllers
@@ -20,54 +15,25 @@ namespace backend.Controllers
             _marketDataService = marketDataService;
         }
 
-        [HttpGet("randomday")]
-        public ActionResult<IEnumerable<FiveMinuteBar>> GetRandomDayData()
+        [HttpGet("unaccessed-day")]
+        public async Task<IActionResult> GetUnaccessedDay(int userId)
         {
-            try
+            var unaccessedDay = await _marketDataService.GetUnaccessedDay(userId);
+
+            if (unaccessedDay == null)
             {
-                // Load the JSON data from the file
-                var jsonData = System.IO.File.ReadAllText("Data/mockdata.json");
-
-                // Deserialize the JSON data into a list of FiveMinuteBar objects
-                var data = JsonConvert.DeserializeObject<List<FiveMinuteBar>>(jsonData);
-
-                if (data != null && data.Count > 0)
-                {
-                    // Group the data by date
-                    var groupedData = new Dictionary<string, List<FiveMinuteBar>>();
-                    foreach (var entry in data)
-                    {
-                        if (entry.Date != null)
-                        {
-                            if (!groupedData.ContainsKey(entry.Date))
-                            {
-                                groupedData[entry.Date] = new List<FiveMinuteBar>();
-                            }
-                            groupedData[entry.Date].Add(entry);
-                        }
-                    }
-
-                    // Randomly select a day's data to return
-                    var random = new Random();
-                    var randomDayData = groupedData.Values.ElementAt(random.Next(groupedData.Count));
-
-                    return Ok(randomDayData);
-                }
-                else
-                {
-                    return NotFound("Data not found");
-                }
+                return NotFound("No unaccessed day available for this user.");
             }
-            catch (Exception ex)
-            {
-                return StatusCode(500, "Internal server error: " + ex.Message);
-            }
+
+            return Ok(unaccessedDay);
         }
 
+
+
         [HttpPost("fetch-data")]
-        public async Task<IActionResult> FetchAndSaveData(int sessionId)
+        public async Task<IActionResult> FetchAndSaveData()
         {
-            await _marketDataService.FetchAndSaveMonthlyData(sessionId);
+            await _marketDataService.FetchAndSaveMonthlyData();
             return Ok("Data fetched and saved successfully.");
         }
 

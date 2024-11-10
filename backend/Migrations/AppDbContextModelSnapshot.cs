@@ -17,23 +17,46 @@ namespace backend.Migrations
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "8.0.10");
 
-            modelBuilder.Entity("backend.Models.Day", b =>
+            modelBuilder.Entity("backend.Models.AccessedDay", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
-                    b.Property<string>("Date")
-                        .HasColumnType("TEXT");
+                    b.Property<int>("MarketDataDayId")
+                        .HasColumnType("INTEGER");
 
-                    b.Property<int>("TradingSessionId")
+                    b.Property<int>("UserId")
                         .HasColumnType("INTEGER");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("TradingSessionId");
+                    b.HasIndex("MarketDataDayId");
 
-                    b.ToTable("Days");
+                    b.HasIndex("UserId");
+
+                    b.ToTable("AccessedDays");
+                });
+
+            modelBuilder.Entity("backend.Models.AccessedMonth", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("MarketDataMonthId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("MarketDataMonthId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("AccessedMonths");
                 });
 
             modelBuilder.Entity("backend.Models.FiveMinuteBar", b =>
@@ -46,10 +69,8 @@ namespace backend.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Date")
+                        .IsRequired()
                         .HasColumnType("TEXT");
-
-                    b.Property<int?>("DayId")
-                        .HasColumnType("INTEGER");
 
                     b.Property<decimal>("High")
                         .HasColumnType("TEXT");
@@ -57,17 +78,56 @@ namespace backend.Migrations
                     b.Property<decimal>("Low")
                         .HasColumnType("TEXT");
 
+                    b.Property<int>("MarketDataDayId")
+                        .HasColumnType("INTEGER");
+
                     b.Property<decimal>("Open")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Time")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("DayId");
+                    b.HasIndex("MarketDataDayId");
 
                     b.ToTable("FiveMinuteBars");
+                });
+
+            modelBuilder.Entity("backend.Models.MarketDataDay", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Date")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("MarketDataMonthId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("MarketDataMonthId");
+
+                    b.ToTable("MarketDataDays");
+                });
+
+            modelBuilder.Entity("backend.Models.MarketDataMonth", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Month")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("MarketDataMonths");
                 });
 
             modelBuilder.Entity("backend.Models.TradingSession", b =>
@@ -96,9 +156,6 @@ namespace backend.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<decimal>("TotalProfitLoss")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("TradingDay")
                         .HasColumnType("TEXT");
 
                     b.Property<int>("UserId")
@@ -138,22 +195,64 @@ namespace backend.Migrations
                     b.ToTable("Users");
                 });
 
-            modelBuilder.Entity("backend.Models.Day", b =>
+            modelBuilder.Entity("backend.Models.AccessedDay", b =>
                 {
-                    b.HasOne("backend.Models.TradingSession", "TradingSession")
-                        .WithMany("Days")
-                        .HasForeignKey("TradingSessionId")
+                    b.HasOne("backend.Models.MarketDataDay", "MarketDataDay")
+                        .WithMany("AccessedDays")
+                        .HasForeignKey("MarketDataDayId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("TradingSession");
+                    b.HasOne("backend.Models.User", "User")
+                        .WithMany("AccessedDays")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("MarketDataDay");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("backend.Models.AccessedMonth", b =>
+                {
+                    b.HasOne("backend.Models.MarketDataMonth", "MarketDataMonth")
+                        .WithMany("AccessedMonths")
+                        .HasForeignKey("MarketDataMonthId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("backend.Models.User", "User")
+                        .WithMany("AccessedMonths")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("MarketDataMonth");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("backend.Models.FiveMinuteBar", b =>
                 {
-                    b.HasOne("backend.Models.Day", null)
+                    b.HasOne("backend.Models.MarketDataDay", "MarketDataDay")
                         .WithMany("FiveMinuteBars")
-                        .HasForeignKey("DayId");
+                        .HasForeignKey("MarketDataDayId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("MarketDataDay");
+                });
+
+            modelBuilder.Entity("backend.Models.MarketDataDay", b =>
+                {
+                    b.HasOne("backend.Models.MarketDataMonth", "MarketDataMonth")
+                        .WithMany("Days")
+                        .HasForeignKey("MarketDataMonthId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("MarketDataMonth");
                 });
 
             modelBuilder.Entity("backend.Models.TradingSession", b =>
@@ -167,18 +266,26 @@ namespace backend.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("backend.Models.Day", b =>
+            modelBuilder.Entity("backend.Models.MarketDataDay", b =>
                 {
+                    b.Navigation("AccessedDays");
+
                     b.Navigation("FiveMinuteBars");
                 });
 
-            modelBuilder.Entity("backend.Models.TradingSession", b =>
+            modelBuilder.Entity("backend.Models.MarketDataMonth", b =>
                 {
+                    b.Navigation("AccessedMonths");
+
                     b.Navigation("Days");
                 });
 
             modelBuilder.Entity("backend.Models.User", b =>
                 {
+                    b.Navigation("AccessedDays");
+
+                    b.Navigation("AccessedMonths");
+
                     b.Navigation("CurrentTradingSession");
                 });
 #pragma warning restore 612, 618
