@@ -25,6 +25,11 @@ namespace backend.Data
                 .WithOne(ts => ts.User)
                 .HasForeignKey<TradingSession>(ts => ts.UserId);
 
+            // Unique constraint for UserId and Instrument in TradingSession
+            modelBuilder.Entity<TradingSession>()
+                .HasIndex(ts => new { ts.UserId, ts.Instrument })
+                .IsUnique();
+
             // MarketDataMonth to MarketDataDay (1-to-Many)
             modelBuilder.Entity<MarketDataMonth>()
                 .HasMany(m => m.Days)

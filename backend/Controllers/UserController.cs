@@ -5,6 +5,7 @@ using System.Text;
 using Microsoft.EntityFrameworkCore;
 using backend.DTOs;
 using backend.Models;
+using backend.Services;
 
 namespace backend.Controllers
 {
@@ -13,10 +14,12 @@ namespace backend.Controllers
     public class UserController : ControllerBase
     {
         private readonly AppDbContext _context;
+        private readonly TradingSessionService _tradingSessionService;
 
-        public UserController(AppDbContext context)
+        public UserController(AppDbContext context, TradingSessionService tradingSessionService)
         {
             _context = context;
+            _tradingSessionService = tradingSessionService;
         }
 
         [HttpPost("register")]
@@ -41,7 +44,10 @@ namespace backend.Controllers
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
 
-            return Ok("User registered successfully.");
+            // Start a new trading session for the user
+            var newSession = await _tradingSessionService.StartNewSession(user.Id);
+
+            return Ok(new { Message = "User registered and session started successfully.", SessionId = newSession.Id });
         }
 
         [HttpPost("login")]
@@ -107,7 +113,10 @@ namespace backend.Controllers
             _context.TradingSessions.Add(tradingSession);
             await _context.SaveChangesAsync();
 
-            return Ok("Trading session started successfully.");
+            // Start a new trading session for the user
+            var newSession = await _tradingSessionService.StartNewSession(user.Id);
+
+            return Ok(new { Message = "User registered and session started successfully.", SessionId = newSession.Id });
         }
 
         [HttpGet("trading-session")]

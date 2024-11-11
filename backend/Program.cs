@@ -33,6 +33,9 @@ builder.Services.AddHttpClient<MarketDataService>();
 // Register MarketDataService
 builder.Services.AddScoped<MarketDataService>();
 
+builder.Services.AddScoped<TradingSessionService>();
+
+
 var app = builder.Build();
 
 // Ensure initial data is available
