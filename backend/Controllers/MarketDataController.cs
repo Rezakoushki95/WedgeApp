@@ -36,14 +36,6 @@ namespace backend.Controllers
             await _marketDataService.FetchAndSaveMonthlyData();
             return Ok("Data fetched and saved successfully.");
         }
-
-
-        // [HttpGet("test-parsing")]
-        // public async Task<IActionResult> TestParsing()
-        // {
-        //     await _marketDataService.LoadMonthlyData();
-        //     return Ok("Parsing test completed. Check console output for data sample.");
-        // }
     }
 
 }

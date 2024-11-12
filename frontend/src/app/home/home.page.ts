@@ -1,19 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { MarketDataService } from '../services/market-data.service';
-
-export enum PositionState {
-  None,
-  Long,
-  Short,
-}
-
-interface MarketDataEntry {
-  time: string;
-  open: number;
-  high: number;
-  low: number;
-  close: number;
-}
+import { BarData } from '../models/bar-data.model';
 
 @Component({
   selector: 'app-home',
@@ -21,23 +8,24 @@ interface MarketDataEntry {
   styleUrls: ['./home.page.scss'],
 })
 export class HomePage implements OnInit {
-  marketData: MarketDataEntry[] = [];
-  currentBarIndex: number = 0;
+  bars: BarData[] = [];
 
   constructor(private marketDataService: MarketDataService) {}
 
   ngOnInit() {
-    this.fetchMarketData();
+    this.fetchRandomDay();
   }
 
-  fetchMarketData() {
-    this.marketDataService.getRandomDayData().subscribe({
-      next: (data: MarketDataEntry[]) => {
-        this.marketData = data
+  fetchRandomDay(userId?: number) {
+    this.marketDataService.getUnaccessedDay(userId).subscribe({
+      next: (data) => {
+        console.log("Fetched data:", data); // Log to inspect the structure
+        this.bars = data;
       },
-      error: (error) => {
-        console.error('Error fetching market data:', error);
+      error: (err) => {
+        console.error('Error fetching unaccessed day:', err);
       },
     });
   }
+  
 }

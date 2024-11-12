@@ -22,12 +22,18 @@
   <ion-grid class="chart-grid">
     <ion-row>
       <ion-col>
-        <div class="chart-placeholder" *ngIf="marketData.length > 0">
-          <p>Time: {{ marketData[currentBarIndex].time }}</p>
-          <p>Open: {{ marketData[currentBarIndex].open }}</p>
-          <p>High: {{ marketData[currentBarIndex].high }}</p>
-          <p>Low: {{ marketData[currentBarIndex].low }}</p>
-          <p>Close: {{ marketData[currentBarIndex].close }}</p>
+        <div class="chart-placeholder">
+          <div *ngIf="bars.length > 0">
+            <h2>Market Data for the Day</h2>
+            <ul>
+              <li *ngFor="let bar of bars">
+                {{ bar.time }} - Open: {{ bar.open }}, Close: {{ bar.close }}
+              </li>
+            </ul>
+          </div>
+          <div *ngIf="bars.length === 0">
+            <p>No data available for this day.</p>
+          </div>
         </div>
       </ion-col>
     </ion-row>
