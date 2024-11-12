@@ -35,6 +35,7 @@ builder.Services.AddScoped<MarketDataService>();
 
 builder.Services.AddScoped<TradingSessionService>();
 
+builder.Services.AddScoped<UserStatsService>();
 
 var app = builder.Build();
 

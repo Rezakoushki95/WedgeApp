@@ -98,26 +98,12 @@ namespace backend.Controllers
                 return NotFound("User not found.");
             }
 
-            // Create a new TradingSession when the user starts a session
-            var tradingSession = new TradingSession
-            {
-                UserId = user.Id,
-                Instrument = "S&P 500",
-                CurrentBarIndex = 0,
-                HasOpenOrder = false,
-                EntryPrice = null,
-                CurrentProfitLoss = null,
-                TotalProfitLoss = 0,
-                TotalOrders = 0
-            };
-            _context.TradingSessions.Add(tradingSession);
-            await _context.SaveChangesAsync();
-
-            // Start a new trading session for the user
+            // Start a new trading session using the service
             var newSession = await _tradingSessionService.StartNewSession(user.Id);
 
-            return Ok(new { Message = "User registered and session started successfully.", SessionId = newSession.Id });
+            return Ok(new { Message = "Session started successfully.", SessionId = newSession.Id });
         }
+
 
         [HttpGet("trading-session")]
         public async Task<IActionResult> GetTradingSession(int userId)

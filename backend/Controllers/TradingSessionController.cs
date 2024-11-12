@@ -15,6 +15,30 @@ namespace backend.Controllers
             _tradingSessionService = tradingSessionService;
         }
 
+        [HttpPut("update-session")]
+        public async Task<IActionResult> UpdateSession([FromBody] UpdateSessionDto updateDto)
+        {
+            try
+            {
+                await _tradingSessionService.UpdateSession(
+                    updateDto.SessionId,
+                    updateDto.CurrentBarIndex,
+                    updateDto.HasOpenOrder,
+                    updateDto.EntryPrice,
+                    updateDto.CurrentProfitLoss,
+                    updateDto.TotalProfitLoss,
+                    updateDto.TotalOrders
+                );
+                return Ok(new { message = "Session updated successfully" });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+
+
         [HttpGet("active")]
         public async Task<ActionResult<TradingSession?>> GetActiveSession(int userId, string instrument = "S&P 500")
         {
