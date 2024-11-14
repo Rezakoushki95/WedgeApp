@@ -15,7 +15,7 @@ namespace backend.Controllers
             _tradingSessionService = tradingSessionService;
         }
 
-        [HttpPut("update-session")]
+        [HttpPut("update-session")] // test
         public async Task<IActionResult> UpdateSession([FromBody] UpdateSessionDto updateDto)
         {
             try
