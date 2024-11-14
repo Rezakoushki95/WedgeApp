@@ -23,17 +23,7 @@
     <ion-row>
       <ion-col>
         <div class="chart-placeholder">
-          <div *ngIf="bars.length > 0">
-            <h2>Market Data for the Day</h2>
-            <ul>
-              <li *ngFor="let bar of bars">
-                {{ bar.time }} - Open: {{ bar.open }}, Close: {{ bar.close }}
-              </li>
-            </ul>
-          </div>
-          <div *ngIf="bars.length === 0">
-            <p>No data available for this day.</p>
-          </div>
+          <app-lightweight-chart></app-lightweight-chart>
         </div>
       </ion-col>
     </ion-row>
@@ -49,7 +39,9 @@
         <div class="order-info-label">Entry Price: 99999</div>
       </ion-col>
       <ion-col size="5">
-        <ion-button expand="block" class="next-bar-button">Next Bar</ion-button>
+        <ion-button expand="block" class="next-bar-button" (click)="onNextBar()"
+          >Next Bar</ion-button
+        >
       </ion-col>
     </ion-row>
 
@@ -67,78 +59,3 @@
     </ion-row>
   </ion-grid>
 </ion-footer>
-
-<!-- <ion-header>
-  <ion-toolbar>
-    <ion-title>S&P 500</ion-title>
-  </ion-toolbar>
-</ion-header>
-
-<ion-content>
-  <div class="stats-container">
-    <h3>Realized P&L: {{ dailyProfitLoss | number:'1.2-2' }}</h3>
-    <h3># of Orders: {{ positionsTaken }}</h3>
-  </div>
-
-  <div class="current-bar-container" *ngIf="currentBarIndex >= 0">
-    <h2>Current Bar</h2>
-    <p>
-      {{ marketData[currentBarIndex].time }} - Open: {{
-      marketData[currentBarIndex].open }}, High: {{
-      marketData[currentBarIndex].high }}, Low: {{
-      marketData[currentBarIndex].low }}, Close: {{
-      marketData[currentBarIndex].close }}
-    </p>
-  </div>
-
-  <ion-grid class="button-grid">
-    <ion-row>
-      <ion-col size="8">
-        <div class="order-info-container">
-          <p>Some additional text you want to write here</p>
-        </div>
-      </ion-col>
-
-      <ion-col size="4">
-        <ion-button
-          expand="block"
-          (click)="nextBar()"
-          [disabled]="currentBarIndex >= marketData.length - 1"
-          >Next</ion-button
-        >
-      </ion-col>
-    </ion-row>
-  </ion-grid>
-
-  <ion-grid class="position-action-grid">
-    <ion-row>
-      <ion-col size="4">
-        <ion-button
-          color="success"
-          expand="block"
-          (click)="enterLong()"
-          [disabled]="hasOpenPosition"
-          >Long</ion-button
-        >
-      </ion-col>
-      <ion-col size="4">
-        <ion-button
-          color="danger"
-          expand="block"
-          (click)="enterShort()"
-          [disabled]="hasOpenPosition"
-          >Short</ion-button
-        >
-      </ion-col>
-      <ion-col size="4">
-        <ion-button
-          expand="block"
-          (click)="exitPosition()"
-          [disabled]="!hasOpenPosition"
-          >Exit</ion-button
-        >
-      </ion-col>
-    </ion-row>
-  </ion-grid>
-</ion-content>
--->

@@ -33,23 +33,19 @@ ion-content::part(scroll) {
   padding: 0;
   flex-grow: 1;
   margin: 0;
+  height: auto;
 
   ion-row {
     height: 100%;
   }
 }
 
-/* Chart Placeholder */
 .chart-placeholder {
-  background-color: #b6b6b6; 
+  width: 100%;
   height: 100%;
   display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  color: #ffffff; 
-  font-size: 1.2rem;
 }
+
 
 .order-info-col {
   display: flex;
@@ -66,73 +62,3 @@ ion-content::part(scroll) {
 .footer-grid {
   padding-top: 0;
 }
-
-
-/* Remove Action Buttons Column Class
-   Now using Ionic Utilities for Flexbox instead of custom CSS */
-
-
-
-/* :root {
-  --padding-size: 1.5%; // Relative padding for more flexibility
-  --font-size: 1rem;    // Base font size
-  --margin-size: 2%;
-}
-
-.stats-container {
-  display: flex;
-  justify-content: space-between;
-  padding: var(--padding-size);
-  margin: auto;
-  font-size: var(--font-size);
-  width: 96%;
-}
-
-.current-bar-container {
-  font-size: calc(var(--font-size) * 1.2); // Slightly larger for better visibility
-  height: 60vh; // Takes up 60% of the viewport height to maximize space for the graph
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-}
-
-.button-container {
-  position: fixed;
-  bottom: 15vh; // Set relative to viewport height to maintain a consistent distance from the bottom
-  left: 0;
-  right: 0;
-}
-
-.position-action-grid {
-  position: fixed;
-  bottom: 1vh; // Set relative to viewport height to ensure it stays at the bottom of the viewport
-  left: 0;
-  right: 0;
-  padding: var(--padding-size);
-  width: 100%; // Ensure the grid takes up the full width of the viewport
-}
-
-.position-action-row {
-  justify-content: space-around; // Distribute columns evenly across the row
-}
-
-ion-button {
-  font-size: calc(var(--font-size) * 1.1);
-  padding: 1em;
-  border-radius: 0.5em; // Make buttons more touch-friendly
-}
-
-.position-action-row ion-col {
-  max-width: 30%; // Ensure buttons do not take up too much space on large screens
-}
-
-.order-info-container {
-    padding: var(--padding-size);
-    font-size: var(--font-size);
-    display: flex;
-    align-items: center;
-  
-  
-} */

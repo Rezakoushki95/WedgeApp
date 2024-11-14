@@ -1,31 +1,19 @@
-import { Component, OnInit } from '@angular/core';
-import { MarketDataService } from '../services/market-data.service';
-import { BarData } from '../models/bar-data.model';
+import { Component, OnInit, ViewChild } from '@angular/core';
+import { LightweightChartComponent } from '../lightweight-chart/lightweight-chart.component';
 
 @Component({
   selector: 'app-home',
   templateUrl: './home.page.html',
-  styleUrls: ['./home.page.scss'],
+  styleUrls: ['./home.page.scss']
 })
 export class HomePage implements OnInit {
-  bars: BarData[] = [];
+  @ViewChild(LightweightChartComponent) lightweightChart!: LightweightChartComponent;
 
-  constructor(private marketDataService: MarketDataService) {}
+  ngOnInit(): void {}
 
-  ngOnInit() {
-    this.fetchRandomDay();
+  onNextBar() {
+    if (this.lightweightChart) {
+      this.lightweightChart.showNextBar();
+    }
   }
-
-  fetchRandomDay(userId?: number) {
-    this.marketDataService.getUnaccessedDay(userId).subscribe({
-      next: (data) => {
-        console.log("Fetched data:", data); // Log to inspect the structure
-        this.bars = data;
-      },
-      error: (err) => {
-        console.error('Error fetching unaccessed day:', err);
-      },
-    });
-  }
-  
 }
