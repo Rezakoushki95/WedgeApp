@@ -44,10 +44,10 @@ namespace backend.Controllers
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
 
-            // Start a new trading session for the user
-            var newSession = await _tradingSessionService.StartNewSession(user.Id);
+            // Get or start a trading session for the user
+            var session = await _tradingSessionService.GetOrStartSession(user.Id);
 
-            return Ok(new { Message = "User registered and session started successfully.", SessionId = newSession.Id });
+            return Ok(new { Message = "User registered and session initialized successfully.", SessionId = session.Id });
         }
 
         [HttpPost("login")]
@@ -88,32 +88,13 @@ namespace backend.Controllers
             return Convert.ToBase64String(hash);
         }
 
-        [HttpPost("start-session")]
-        public async Task<IActionResult> StartTradingSession(int userId)
-        {
-            // Check if the user exists
-            var user = await _context.Users.FindAsync(userId);
-            if (user == null)
-            {
-                return NotFound("User not found.");
-            }
-
-            // Start a new trading session using the service
-            var newSession = await _tradingSessionService.StartNewSession(user.Id);
-
-            return Ok(new { Message = "Session started successfully.", SessionId = newSession.Id });
-        }
-
-
         [HttpGet("trading-session")]
         public async Task<IActionResult> GetTradingSession(int userId)
         {
-            var tradingSession = await _context.TradingSessions.FirstOrDefaultAsync(ts => ts.UserId == userId);
-            if (tradingSession == null)
-            {
-                return NotFound("No trading session found for this user.");
-            }
-            return Ok(tradingSession);
+            // Get or start a trading session for the user
+            var session = await _tradingSessionService.GetOrStartSession(userId);
+
+            return Ok(session);
         }
     }
 }

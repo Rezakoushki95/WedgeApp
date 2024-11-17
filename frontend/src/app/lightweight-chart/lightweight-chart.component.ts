@@ -58,6 +58,14 @@ export class LightweightChartComponent implements AfterViewInit, OnDestroy {
     this.resizeObserver.observe(this.chartContainer.nativeElement);
   }
 
+  public getCurrentBar(): BarData | null {
+    if (this.currentBarIndex > 0 && this.currentBarIndex <= this.dayData.length) {
+      return this.dayData[this.currentBarIndex - 1]; // Return the current bar
+    }
+    return null; // Return null if no valid current bar
+  }
+  
+
   public setData(data: BarData[]) {
     // Map the data to use index as `time` directly and cast to `UTCTimestamp`
     this.dayData = data.map((bar, index) => ({

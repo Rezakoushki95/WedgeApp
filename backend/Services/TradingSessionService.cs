@@ -13,27 +13,21 @@ public class TradingSessionService
         _context = context;
         _userStatsService = userStatsService;
     }
-    public async Task<TradingSession> StartNewSession(int userId)
+
+    public async Task<TradingSession> GetOrStartSession(int userId)
     {
         // Check if there's an existing session for the user and instrument
         var existingSession = await _context.TradingSessions
             .Where(s => s.UserId == userId && s.Instrument == "S&P 500")
             .FirstOrDefaultAsync();
 
-        // If an active session exists, return it
-        if (existingSession != null && existingSession.IsActive)
+        // If a session exists, return it for resumption
+        if (existingSession != null)
         {
             return existingSession;
         }
 
-        // If an inactive session exists, close it before creating a new one
-        if (existingSession != null && !existingSession.IsActive)
-        {
-            _context.TradingSessions.Remove(existingSession);
-            await _context.SaveChangesAsync();
-        }
-
-        // Proceed to create a new session
+        // If no session exists, proceed to create a new one
         var nextMonth = await _context.MarketDataMonths
             .Include(m => m.Days)
             .Where(m => !m.Days.Any(d => d.AccessedDays.Any(a => a.UserId == userId)))
@@ -46,7 +40,7 @@ public class TradingSessionService
         }
 
         var nextDay = nextMonth.Days.FirstOrDefault();
-        if (nextDay == null || string.IsNullOrEmpty(nextDay.Date))
+        if (nextDay == null || nextDay.Date == default(DateTime)) // Check for default DateTime
         {
             throw new Exception("No available trading day found in the selected month.");
         }
@@ -59,10 +53,8 @@ public class TradingSessionService
             CurrentBarIndex = 0,
             HasOpenOrder = false,
             EntryPrice = null,
-            CurrentProfitLoss = 0,
             TotalProfitLoss = 0,
-            TotalOrders = 0,
-            IsActive = true
+            TotalOrders = 0
         };
 
         _context.TradingSessions.Add(newSession);
@@ -71,9 +63,8 @@ public class TradingSessionService
         return newSession;
     }
 
-
     public async Task UpdateSession(int sessionId, int? currentBarIndex = null, bool? hasOpenOrder = null,
-                                decimal? entryPrice = null, decimal? currentProfitLoss = null,
+                                decimal? entryPrice = null,
                                 decimal? totalProfitLoss = null, int? totalOrders = null)
     {
         var session = await _context.TradingSessions.FindAsync(sessionId);
@@ -86,32 +77,9 @@ public class TradingSessionService
         if (currentBarIndex.HasValue) session.CurrentBarIndex = currentBarIndex.Value;
         if (hasOpenOrder.HasValue) session.HasOpenOrder = hasOpenOrder.Value;
         if (entryPrice.HasValue) session.EntryPrice = entryPrice;
-        if (currentProfitLoss.HasValue) session.CurrentProfitLoss = currentProfitLoss;
         if (totalProfitLoss.HasValue) session.TotalProfitLoss = totalProfitLoss.Value;
         if (totalOrders.HasValue) session.TotalOrders = totalOrders.Value;
 
         await _context.SaveChangesAsync();
-    }
-
-    public async Task<TradingSession?> GetActiveSession(int userId, string instrument = "S&P 500")
-    {
-        return await _context.TradingSessions
-            .Where(s => s.UserId == userId && s.Instrument == instrument && s.IsActive)
-            .FirstOrDefaultAsync();
-    }
-
-    public async Task CloseSession(int sessionId)
-    {
-        var session = await _context.TradingSessions.FindAsync(sessionId);
-
-        if (session == null)
-        {
-            throw new Exception("Session not found.");
-        }
-
-        session.IsActive = false;
-        await _context.SaveChangesAsync();
-        await _userStatsService.UpdateUserStats(session.UserId, session.TotalProfitLoss, session.TotalOrders);
-
     }
 }

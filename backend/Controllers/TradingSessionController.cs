@@ -15,7 +15,7 @@ namespace backend.Controllers
             _tradingSessionService = tradingSessionService;
         }
 
-        [HttpPut("update-session")] // test
+        [HttpPut("update-session")]
         public async Task<IActionResult> UpdateSession([FromBody] UpdateSessionDto updateDto)
         {
             try
@@ -25,7 +25,6 @@ namespace backend.Controllers
                     updateDto.CurrentBarIndex,
                     updateDto.HasOpenOrder,
                     updateDto.EntryPrice,
-                    updateDto.CurrentProfitLoss,
                     updateDto.TotalProfitLoss,
                     updateDto.TotalOrders
                 );
@@ -37,28 +36,13 @@ namespace backend.Controllers
             }
         }
 
-
-
-        [HttpGet("active")]
-        public async Task<ActionResult<TradingSession?>> GetActiveSession(int userId, string instrument = "S&P 500")
-        {
-            var session = await _tradingSessionService.GetActiveSession(userId, instrument);
-
-            if (session == null)
-            {
-                return NotFound();
-            }
-
-            return Ok(session);
-        }
-
-        [HttpPost("close")]
-        public async Task<IActionResult> CloseSession([FromQuery] int sessionId)
+        [HttpGet("get-session")]
+        public async Task<IActionResult> GetOrStartSession(int userId)
         {
             try
             {
-                await _tradingSessionService.CloseSession(sessionId);
-                return Ok(new { message = "Session closes successfully" });
+                var session = await _tradingSessionService.GetOrStartSession(userId);
+                return Ok(session);
             }
             catch (Exception ex)
             {
