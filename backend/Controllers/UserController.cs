@@ -5,7 +5,6 @@ using System.Text;
 using Microsoft.EntityFrameworkCore;
 using backend.DTOs;
 using backend.Models;
-using backend.Services;
 
 namespace backend.Controllers
 {
@@ -14,12 +13,10 @@ namespace backend.Controllers
     public class UserController : ControllerBase
     {
         private readonly AppDbContext _context;
-        private readonly TradingSessionService _tradingSessionService;
 
-        public UserController(AppDbContext context, TradingSessionService tradingSessionService)
+        public UserController(AppDbContext context)
         {
             _context = context;
-            _tradingSessionService = tradingSessionService;
         }
 
         [HttpPost("register")]
@@ -44,10 +41,7 @@ namespace backend.Controllers
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
 
-            // Get or start a trading session for the user
-            var session = await _tradingSessionService.GetOrStartSession(user.Id);
-
-            return Ok(new { Message = "User registered and session initialized successfully.", SessionId = session.Id });
+            return Ok(new { Message = "User registered successfully.", UserId = user.Id });
         }
 
         [HttpPost("login")]
@@ -72,7 +66,7 @@ namespace backend.Controllers
                 return Unauthorized("Invalid password.");
             }
 
-            return Ok("Login successful.");
+            return Ok(new { Message = "Login successful.", UserId = user.Id });
         }
 
         private async Task<bool> UsernameExists(string username)
@@ -86,15 +80,6 @@ namespace backend.Controllers
             var bytes = Encoding.UTF8.GetBytes(password);
             var hash = sha256.ComputeHash(bytes);
             return Convert.ToBase64String(hash);
-        }
-
-        [HttpGet("trading-session")]
-        public async Task<IActionResult> GetTradingSession(int userId)
-        {
-            // Get or start a trading session for the user
-            var session = await _tradingSessionService.GetOrStartSession(userId);
-
-            return Ok(session);
         }
     }
 }

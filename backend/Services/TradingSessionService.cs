@@ -14,37 +14,38 @@ public class TradingSessionService
         _userStatsService = userStatsService;
     }
 
-    public async Task<TradingSession> GetOrStartSession(int userId)
+    // Get an existing session for the user
+    public async Task<TradingSession?> GetSession(int userId)
     {
-        // Check if there's an existing session for the user and instrument
-        var existingSession = await _context.TradingSessions
+        return await _context.TradingSessions
             .Where(s => s.UserId == userId && s.Instrument == "S&P 500")
             .FirstOrDefaultAsync();
+    }
 
-        // If a session exists, return it for resumption
-        if (existingSession != null)
-        {
-            return existingSession;
-        }
-
-        // If no session exists, proceed to create a new one
-        var nextMonth = await _context.MarketDataMonths
-            .Include(m => m.Days)
-            .Where(m => !m.Days.Any(d => d.AccessedDays.Any(a => a.UserId == userId)))
-            .OrderBy(m => m.Id)
+    // Start a new session for the user
+    public async Task<TradingSession> StartSession(int userId)
+    {
+        // Fetch the next available day for the user
+        var nextDay = await _context.MarketDataDays
+            .Include(d => d.AccessedDays)
+            .Where(d => !d.AccessedDays.Any(ad => ad.UserId == userId))
+            .OrderBy(d => d.Date) // Ensures chronological order
             .FirstOrDefaultAsync();
 
-        if (nextMonth == null || !nextMonth.Days.Any())
+        if (nextDay == null)
         {
             throw new Exception("No available trading data found for this user.");
         }
 
-        var nextDay = nextMonth.Days.FirstOrDefault();
-        if (nextDay == null || nextDay.Date == default(DateTime)) // Check for default DateTime
+        // Mark the day as accessed
+        var accessedDay = new AccessedDay
         {
-            throw new Exception("No available trading day found in the selected month.");
-        }
+            UserId = userId,
+            MarketDataDayId = nextDay.Id
+        };
+        _context.AccessedDays.Add(accessedDay);
 
+        // Create a new trading session
         var newSession = new TradingSession
         {
             UserId = userId,
@@ -63,9 +64,9 @@ public class TradingSessionService
         return newSession;
     }
 
+    // Update the session state
     public async Task UpdateSession(int sessionId, int? currentBarIndex = null, bool? hasOpenOrder = null,
-                                decimal? entryPrice = null,
-                                decimal? totalProfitLoss = null, int? totalOrders = null)
+                                    decimal? entryPrice = null, decimal? totalProfitLoss = null, int? totalOrders = null)
     {
         var session = await _context.TradingSessions.FindAsync(sessionId);
 

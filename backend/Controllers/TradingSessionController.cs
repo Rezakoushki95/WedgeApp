@@ -15,6 +15,39 @@ namespace backend.Controllers
             _tradingSessionService = tradingSessionService;
         }
 
+        [HttpGet("get-session")]
+        public async Task<IActionResult> GetSession(int userId)
+        {
+            try
+            {
+                var session = await _tradingSessionService.GetSession(userId);
+                if (session == null)
+                {
+                    return NotFound(new { message = "No trading session found for this user." });
+                }
+
+                return Ok(session);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        [HttpPost("start-session")]
+        public async Task<IActionResult> StartSession(int userId)
+        {
+            try
+            {
+                var session = await _tradingSessionService.StartSession(userId);
+                return Ok(new { message = "New trading session started successfully.", session });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
         [HttpPut("update-session")]
         public async Task<IActionResult> UpdateSession([FromBody] UpdateSessionDto updateDto)
         {
@@ -28,21 +61,7 @@ namespace backend.Controllers
                     updateDto.TotalProfitLoss,
                     updateDto.TotalOrders
                 );
-                return Ok(new { message = "Session updated successfully" });
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
-        }
-
-        [HttpGet("get-session")]
-        public async Task<IActionResult> GetOrStartSession(int userId)
-        {
-            try
-            {
-                var session = await _tradingSessionService.GetOrStartSession(userId);
-                return Ok(session);
+                return Ok(new { message = "Session updated successfully." });
             }
             catch (Exception ex)
             {
