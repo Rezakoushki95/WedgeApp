@@ -20,29 +20,35 @@ namespace backend.Controllers
         }
 
         [HttpPost("register")]
-        public async Task<IActionResult> Register([FromBody] User user)
+        public async Task<IActionResult> Register([FromBody] RegisterDTO registerDto)
         {
-            if (string.IsNullOrWhiteSpace(user.Username))
+            if (string.IsNullOrWhiteSpace(registerDto.Username))
             {
                 return BadRequest("Username cannot be empty.");
             }
 
-            if (await UsernameExists(user.Username))
+            if (await UsernameExists(registerDto.Username))
             {
                 return BadRequest("Username already exists.");
             }
 
-            if (string.IsNullOrWhiteSpace(user.PasswordHash))
+            if (string.IsNullOrWhiteSpace(registerDto.Password))
             {
                 return BadRequest("Password cannot be empty.");
             }
 
-            user.PasswordHash = HashPassword(user.PasswordHash);
+            var user = new User
+            {
+                Username = registerDto.Username,
+                PasswordHash = HashPassword(registerDto.Password) // Hash the plain-text password
+            };
+
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
 
             return Ok(new { Message = "User registered successfully.", UserId = user.Id });
         }
+
 
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginDTO login)

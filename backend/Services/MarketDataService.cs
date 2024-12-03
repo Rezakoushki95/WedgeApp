@@ -19,6 +19,8 @@ namespace backend.Services
             _apiKey = configuration["AlphaVantage:ApiKey"] ?? throw new InvalidOperationException("API key not found.");
         }
 
+
+
         public async Task EnsureInitialMonthlyData()
         {
             var existingMonth = await _context.MarketDataMonths
@@ -32,47 +34,6 @@ namespace backend.Services
             }
 
             await FetchAndSaveMonthlyData();
-        }
-
-        public async Task<MarketDataDay?> GetUnaccessedDay(int userId)
-        {
-            var unaccessedMonths = await _context.MarketDataMonths
-                .Where(m => !_context.AccessedMonths
-                    .Any(a => a.UserId == userId && a.MarketDataMonthId == m.Id))
-                .Include(m => m.Days)
-                .ThenInclude(d => d.FiveMinuteBars)
-                .ToListAsync();
-
-            if (!unaccessedMonths.Any())
-            {
-                Console.WriteLine("No unaccessed months available for this user.");
-                return null;
-            }
-
-            var random = new Random();
-            var randomMonth = unaccessedMonths[random.Next(unaccessedMonths.Count)];
-            var unaccessedDaysInMonth = randomMonth.Days
-                .Where(d => !_context.AccessedDays.Any(ad => ad.UserId == userId && ad.MarketDataDayId == d.Id))
-                .ToList();
-
-            if (!unaccessedDaysInMonth.Any())
-            {
-                Console.WriteLine("No unaccessed days in the selected month.");
-                return null;
-            }
-
-            var randomDay = unaccessedDaysInMonth[random.Next(unaccessedDaysInMonth.Count)];
-
-            // Mark the day as accessed
-            var accessedDay = new AccessedDay
-            {
-                UserId = userId,
-                MarketDataDayId = randomDay.Id
-            };
-            _context.AccessedDays.Add(accessedDay);
-            await _context.SaveChangesAsync();
-
-            return randomDay;
         }
 
         public async Task FetchAndSaveMonthlyData()

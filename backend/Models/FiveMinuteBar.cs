@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace backend.Models;
 
 public class FiveMinuteBar
@@ -11,5 +13,7 @@ public class FiveMinuteBar
 
     // Foreign key to MarketDataDay
     public int MarketDataDayId { get; set; }
+
+    [JsonIgnore]
     public MarketDataDay MarketDataDay { get; set; } = null!;
 }
