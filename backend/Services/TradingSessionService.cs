@@ -8,11 +8,13 @@ public class TradingSessionService
 {
     private readonly AppDbContext _context;
     private readonly UserStatsService _userStatsService;
+    private readonly AccessManagementService _accessManagementService;
 
-    public TradingSessionService(AppDbContext context, UserStatsService userStatsService)
+    public TradingSessionService(AppDbContext context, UserStatsService userStatsService, AccessManagementService accessManagementService)
     {
         _context = context;
         _userStatsService = userStatsService;
+        _accessManagementService = accessManagementService;
     }
 
     // Get an existing session for the user
@@ -41,7 +43,7 @@ public class TradingSessionService
         }
 
         // Fetch an unaccessed day using the centralized method
-        var firstUnaccessedDay = await GetUnaccessedDay(userId);
+        var firstUnaccessedDay = await _accessManagementService.GetUnaccessedDay(userId);
         if (firstUnaccessedDay == null)
         {
             throw new Exception("No available trading data found for this user.");
@@ -136,13 +138,13 @@ public class TradingSessionService
                 throw new Exception("Current trading day not found in MarketDataDays.");
             }
 
-            await MarkDayAsAccessed(user.Id, currentDayId);
+            await _accessManagementService.MarkDayAsAccessed(user.Id, currentDayId);
 
             // Update user stats using UserStatsService
             await _userStatsService.UpdateUserStats(user.Id, session.TotalProfitLoss, session.TotalOrders);
 
             // Prepare the session for the next trading day
-            var nextDay = await GetUnaccessedDay(user.Id)
+            var nextDay = await _accessManagementService.GetUnaccessedDay(user.Id)
                            ?? throw new Exception("No unaccessed trading days available for the user.");
 
             session.TradingDay = nextDay.Date;
@@ -161,51 +163,4 @@ public class TradingSessionService
             throw;
         }
     }
-
-    private async Task MarkDayAsAccessed(int userId, int dayId)
-    {
-        var accessedDay = new AccessedDay
-        {
-            UserId = userId,
-            MarketDataDayId = dayId
-        };
-
-        _context.AccessedDays.Add(accessedDay);
-        await _context.SaveChangesAsync();
-        Console.WriteLine($"Marked day {dayId} as accessed for user {userId}.");
-    }
-
-    // Check for unaccessed days
-    public async Task<MarketDataDay?> GetUnaccessedDay(int userId)
-    {
-        var unaccessedMonths = await _context.MarketDataMonths
-            .Where(m => !_context.AccessedMonths
-                .Any(a => a.UserId == userId && a.MarketDataMonthId == m.Id))
-            .Include(m => m.Days)
-            .ThenInclude(d => d.FiveMinuteBars)
-            .ToListAsync();
-
-        if (!unaccessedMonths.Any())
-        {
-            Console.WriteLine("No unaccessed months available for this user.");
-            return null;
-        }
-
-        var random = new Random();
-        var randomMonth = unaccessedMonths[random.Next(unaccessedMonths.Count)];
-
-        var unaccessedDays = randomMonth.Days
-            .Where(d => !_context.AccessedDays.Any(ad => ad.UserId == userId && ad.MarketDataDayId == d.Id))
-            .OrderBy(d => Guid.NewGuid())
-            .ToList();
-
-        if (!unaccessedDays.Any())
-        {
-            Console.WriteLine("No unaccessed days in the selected month.");
-            return null;
-        }
-
-        return unaccessedDays.First();
-    }
-
 }

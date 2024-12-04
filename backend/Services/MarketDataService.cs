@@ -19,8 +19,6 @@ namespace backend.Services
             _apiKey = configuration["AlphaVantage:ApiKey"] ?? throw new InvalidOperationException("API key not found.");
         }
 
-
-
         public async Task EnsureInitialMonthlyData()
         {
             var existingMonth = await _context.MarketDataMonths
