@@ -4,8 +4,8 @@ using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Add configuration
 builder.Configuration.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
-
 
 // Add services to the container.
 builder.Services.AddControllers();
@@ -22,27 +22,22 @@ builder.Services.AddCors(options =>
             .AllowAnyHeader());
 });
 
-
 // Register the DbContext with SQLite
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlite("Data Source=WedgeApp.db"));
 
-// Register HttpClient for MarketDataService
-builder.Services.AddHttpClient<MarketDataService>();
-
-// Register MarketDataService
-builder.Services.AddScoped<MarketDataService>();
-
-builder.Services.AddScoped<TradingSessionService>();
-
-builder.Services.AddScoped<UserStatsService>();
+// Register services
+builder.Services.AddHttpClient<MarketDataService>(); // HttpClient for API calls
+builder.Services.AddScoped<MarketDataService>(); // Market data fetching and storage logic
+builder.Services.AddScoped<TradingSessionService>(); // Trading session logic
+builder.Services.AddScoped<UserStatsService>(); // User stats updating logic
+builder.Services.AddScoped<AccessManagementService>(); // Access management logic
 
 var app = builder.Build();
 
-// Ensure initial data is available
+// Ensure initial market data
 var marketDataService = app.Services.CreateScope().ServiceProvider.GetRequiredService<MarketDataService>();
 await marketDataService.EnsureInitialMonthlyData();
-
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -56,4 +51,3 @@ app.UseCors("AllowAllOrigins");
 app.UseAuthorization();
 app.MapControllers();
 app.Run();
-

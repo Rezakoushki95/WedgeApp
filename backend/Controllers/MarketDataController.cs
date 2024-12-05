@@ -14,19 +14,36 @@ namespace backend.Controllers
             _marketDataService = marketDataService;
         }
 
-        [HttpPost("fetch-data")]
-        public async Task<IActionResult> FetchAndSaveData()
+        /// <summary>
+        /// Fetch and save a random historical month. Intended for testing or development use.
+        /// </summary>
+        [HttpPost("fetch-random-month")]
+        public async Task<IActionResult> FetchRandomHistoricalMonth()
         {
             try
             {
-                await _marketDataService.FetchAndSaveMonthlyData();
-                return Ok("Data fetched and saved successfully.");
+                await _marketDataService.FetchRandomHistoricalMonth();
+                return Ok("Random historical month fetched and saved successfully.");
             }
             catch (Exception ex)
             {
-                // Log error (optional)
-                return StatusCode(500, new { message = "An error occurred while fetching data.", details = ex.Message });
+                return StatusCode(500, new { message = "An error occurred while fetching random historical data.", details = ex.Message });
             }
         }
+
+        [HttpPost("fetch-next-unique-month")]
+        public async Task<IActionResult> FetchNextUniqueMonth()
+        {
+            try
+            {
+                await _marketDataService.FetchNextUniqueMonth();
+                return Ok("Next unique month fetched and saved successfully.");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "An error occurred while fetching unique month data.", details = ex.Message });
+            }
+        }
+
     }
 }
