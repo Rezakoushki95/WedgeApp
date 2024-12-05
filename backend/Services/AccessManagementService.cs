@@ -67,7 +67,7 @@ public class AccessManagementService
     }
 
     // Mark a month as accessed if all its days are accessed
-    public async Task MarkMonthAsAccessed(int userId, int monthId)
+    public async Task MarkMonthAsGloballyAccessed(int userId, int monthId)
     {
         var month = await _context.MarketDataMonths
             .Include(m => m.Days)
@@ -75,29 +75,60 @@ public class AccessManagementService
 
         if (month == null)
         {
-            throw new Exception($"Month with ID {monthId} not found.");
+            Console.WriteLine($"MarketDataMonth with ID {monthId} not found.");
+            return; // Safely exit if the month doesn't exist
         }
 
+        // Check if all days in the month are accessed
         var allDaysAccessed = month.Days.All(d =>
             _context.AccessedDays.Any(ad => ad.UserId == userId && ad.MarketDataDayId == d.Id));
 
         if (allDaysAccessed)
         {
-            var isAlreadyMarked = _context.AccessedMonths
-                .Any(am => am.UserId == userId && am.MarketDataMonthId == monthId);
+            var isAlreadyMarked = await _context.AccessedMonths
+                .AnyAsync(am => am.UserId == userId && am.MarketDataMonthId == monthId);
 
             if (!isAlreadyMarked)
             {
-                var accessedMonth = new AccessedMonth
+                try
                 {
-                    UserId = userId,
-                    MarketDataMonthId = monthId
-                };
+                    var accessedMonth = new AccessedMonth
+                    {
+                        UserId = userId,
+                        MarketDataMonthId = monthId
+                    };
 
-                _context.AccessedMonths.Add(accessedMonth);
-                await _context.SaveChangesAsync();
-                Console.WriteLine($"Marked month {monthId} as accessed for user {userId}.");
+                    _context.AccessedMonths.Add(accessedMonth);
+                    await _context.SaveChangesAsync();
+
+                    Console.WriteLine($"Successfully marked month {monthId} as globally accessed for user {userId}.");
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Error while marking month {monthId} as globally accessed: {ex.Message}");
+                    throw;
+                }
+            }
+            else
+            {
+                Console.WriteLine($"Month {monthId} is already marked as globally accessed for user {userId}.");
             }
         }
+        else
+        {
+            Console.WriteLine($"Not all days are accessed for month {monthId} by user {userId}. Cannot mark as globally accessed.");
+        }
     }
+
+
+
+    public async Task<bool> AreAllMonthsGloballyAccessed()
+    {
+        var unaccessedMonths = await _context.MarketDataMonths
+            .Where(m => !_context.AccessedMonths.Any(am => am.MarketDataMonthId == m.Id))
+            .ToListAsync();
+
+        return !unaccessedMonths.Any(); // True if all months are globally accessed
+    }
+
 }

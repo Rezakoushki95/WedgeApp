@@ -9,12 +9,14 @@ public class TradingSessionService
     private readonly AppDbContext _context;
     private readonly UserStatsService _userStatsService;
     private readonly AccessManagementService _accessManagementService;
+    private readonly MarketDataService _marketDataService;
 
-    public TradingSessionService(AppDbContext context, UserStatsService userStatsService, AccessManagementService accessManagementService)
+    public TradingSessionService(AppDbContext context, UserStatsService userStatsService, AccessManagementService accessManagementService, MarketDataService markedataService)
     {
         _context = context;
         _userStatsService = userStatsService;
         _accessManagementService = accessManagementService;
+        _marketDataService = markedataService;
     }
 
     // Get an existing session for the user
@@ -68,9 +70,6 @@ public class TradingSessionService
         return newSession;
     }
 
-
-
-    // Update the session state
     // Update the session state
     public async Task UpdateSession(int sessionId, int? currentBarIndex = null, bool? hasOpenOrder = null,
                                     decimal? entryPrice = null, decimal? totalProfitLoss = null, int? totalOrders = null)
@@ -110,57 +109,71 @@ public class TradingSessionService
 
     public async Task CompleteDay(int sessionId)
     {
-        try
+        var session = await _context.TradingSessions
+            .Include(s => s.User)
+            .FirstOrDefaultAsync(s => s.Id == sessionId);
+
+        if (session == null)
         {
-            var session = await _context.TradingSessions
-                .Include(s => s.User)
-                .FirstOrDefaultAsync(s => s.Id == sessionId);
-
-            if (session == null)
-            {
-                throw new Exception("Session not found.");
-            }
-
-            var user = session.User;
-            if (user == null)
-            {
-                throw new Exception("User not associated with the session.");
-            }
-
-            // Mark the current day as accessed
-            var currentDayId = _context.MarketDataDays
-                .Where(d => d.Date == session.TradingDay)
-                .Select(d => d.Id)
-                .FirstOrDefault();
-
-            if (currentDayId == 0)
-            {
-                throw new Exception("Current trading day not found in MarketDataDays.");
-            }
-
-            await _accessManagementService.MarkDayAsAccessed(user.Id, currentDayId);
-
-            // Update user stats using UserStatsService
-            await _userStatsService.UpdateUserStats(user.Id, session.TotalProfitLoss, session.TotalOrders);
-
-            // Prepare the session for the next trading day
-            var nextDay = await _accessManagementService.GetUnaccessedDay(user.Id)
-                           ?? throw new Exception("No unaccessed trading days available for the user.");
-
-            session.TradingDay = nextDay.Date;
-            session.CurrentBarIndex = 0;
-            session.TotalProfitLoss = 0;
-            session.TotalOrders = 0;
-            session.EntryPrice = null;
-
-            await _context.SaveChangesAsync();
-
-            Console.WriteLine($"User stats updated for user {user.Id}. Session reset to next trading day.");
+            throw new Exception("Session not found.");
         }
-        catch (Exception ex)
+
+        var user = session.User ?? throw new Exception("User not associated with the session.");
+
+        // Mark the current day as accessed
+        var currentDayId = _context.MarketDataDays
+            .Where(d => d.Date == session.TradingDay)
+            .Select(d => d.Id)
+            .FirstOrDefault();
+
+        await _accessManagementService.MarkDayAsAccessed(user.Id, currentDayId);
+
+        // Mark the current month as globally accessed
+        var currentMonthId = _context.MarketDataDays
+            .Where(d => d.Id == currentDayId)
+            .Select(d => d.MarketDataMonthId)
+            .FirstOrDefault();
+
+        if (currentMonthId != 0)
         {
-            Console.WriteLine($"Error in CompleteDay: {ex.Message}");
-            throw;
+            await _accessManagementService.MarkMonthAsGloballyAccessed(user.Id, currentMonthId);
         }
+
+        // Update user stats
+        await _userStatsService.UpdateUserStats(user.Id, session.TotalProfitLoss, session.TotalOrders);
+
+        // Get next unaccessed day
+        var nextDay = await _accessManagementService.GetUnaccessedDay(user.Id);
+
+        if (nextDay == null)
+        {
+            // Check if all months are globally accessed
+            var allMonthsGloballyAccessed = await _accessManagementService.AreAllMonthsGloballyAccessed();
+
+            if (allMonthsGloballyAccessed)
+            {
+                // Fetch a new month only if the leading user has exhausted all available data
+                await _marketDataService.FetchNextUniqueMonth();
+            }
+
+            // Retry getting the next day after potentially fetching new data
+            nextDay = await _accessManagementService.GetUnaccessedDay(user.Id);
+
+            if (nextDay == null)
+            {
+                throw new Exception("No available trading data even after fetching new month.");
+            }
+        }
+
+        // Update session to the next day
+        session.TradingDay = nextDay.Date;
+        session.CurrentBarIndex = 0;
+        session.TotalProfitLoss = 0;
+        session.TotalOrders = 0;
+        session.EntryPrice = null;
+
+        await _context.SaveChangesAsync();
     }
+
+
 }
