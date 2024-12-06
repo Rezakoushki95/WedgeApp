@@ -83,28 +83,19 @@ namespace backend.Controllers
                 return BadRequest(new { message = ex.Message });
             }
         }
-
-        // [HttpGet("unaccessed-day")]
-        // public async Task<IActionResult> GetUnaccessedDay(int userId)
-        // {
-        //     try
-        //     {
-        //         var unaccessedDay = await _tradingSessionService.GetUnaccessedDay(userId);
-
-        //         if (unaccessedDay == null)
-        //         {
-        //             return NotFound("No unaccessed day available for this user.");
-        //         }
-
-        //         return Ok(unaccessedDay);
-        //     }
-        //     catch (Exception ex)
-        //     {
-        //         // Log error (optional)
-        //         return StatusCode(500, new { message = "An error occurred while fetching an unaccessed day.", details = ex.Message });
-        //     }
-        // }
-
+        [HttpGet("get-bars")]
+        public async Task<IActionResult> GetBars(int sessionId)
+        {
+            try
+            {
+                var bars = await _tradingSessionService.GetBarsForSession(sessionId);
+                return Ok(bars);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
 
     }
 }

@@ -154,4 +154,6 @@ public class MarketDataService
         await _context.SaveChangesAsync();
         Console.WriteLine($"Data for {targetMonth:yyyy-MM} saved successfully.");
     }
+
+
 }

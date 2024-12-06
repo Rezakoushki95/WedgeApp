@@ -18,6 +18,23 @@ public class TradingSessionService
         _accessManagementService = accessManagementService;
         _marketDataService = markedataService;
     }
+    public async Task<List<FiveMinuteBar>> GetBarsForSession(int sessionId)
+    {
+        // Fetch the session and ensure it exists
+        var session = await _context.TradingSessions.FindAsync(sessionId);
+        if (session == null)
+        {
+            throw new Exception("Session not found.");
+        }
+
+        // Fetch and return the bars for the trading day in the session
+        return await _context.FiveMinuteBars
+            .Where(bar => bar.MarketDataDay.Date == session.TradingDay)
+            .OrderBy(bar => bar.Timestamp) // Ensure chronological order
+            .ToListAsync();
+    }
+
+
 
     // Get an existing session for the user
     public async Task<TradingSession?> GetSession(int userId, string instrument = "S&P 500")

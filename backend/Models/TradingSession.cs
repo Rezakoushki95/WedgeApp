@@ -10,7 +10,7 @@ public class TradingSession
 
     // Session-specific data
     public string Instrument { get; set; } = "S&P 500"; // Default instrument
-    public DateTime? TradingDay { get; set; } // The trading day for the session
+    public DateTime TradingDay { get; set; } // The trading day for the session
 
     public int CurrentBarIndex { get; set; } = 0; // Tracks bar progress within the day
     public bool HasOpenOrder { get; set; } = false; // Indicates if there’s an open order
