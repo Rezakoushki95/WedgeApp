@@ -18,6 +18,11 @@ export class LightweightChartComponent implements AfterViewInit, OnDestroy {
   private currentBarIndex = 0;
   private dayData: BarData[] = []; // Stores the day's data
 
+  public getCurrentBarIndex(): number {
+    return this.currentBarIndex;
+  }
+  
+
   ngAfterViewInit() {
     this.initializeChart();
     this.setupResizeObserver();

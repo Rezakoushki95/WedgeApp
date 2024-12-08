@@ -3,25 +3,18 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { BarData } from '../models/bar-data.model';
 
-export interface MarketDataDay {
-  id: number;
-  date: string;
-  fiveMinuteBars: BarData[];
-  marketDataMonthId: number;
-  accessedDays: any[];
-}
-
 @Injectable({
   providedIn: 'root'
 })
 export class MarketDataService {
-  private apiUrl = 'http://localhost:5068/api/MarketData';
+  private apiUrl = 'http://localhost:5068/api/TradingSession';
 
   constructor(private http: HttpClient) {}
 
-  // Fetch unaccessed day and return it as a MarketDataDay
-  getUnaccessedDay(userId: number = 2): Observable<MarketDataDay> {
-    const url = `${this.apiUrl}/unaccessed-day?userId=${userId}`;
-    return this.http.get<MarketDataDay>(url);
+  // Fetch bars for the current trading session
+  getBarsForSession(sessionId: number) {
+    const url = `http://localhost:5068/api/TradingSession/get-bars?sessionId=${sessionId}`;
+    return this.http.get<BarData[]>(url);
   }
+  
 }

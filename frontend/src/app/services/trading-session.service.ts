@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
 
 @Injectable({
   providedIn: 'root'
@@ -9,21 +10,28 @@ export class TradingSessionService {
 
   constructor(private http: HttpClient) {}
 
-  // Update session with aggregated stats and state
-  updateSession(data: {
-    currentProfitLoss: number;
-    totalProfitLoss: number;
-    totalOrders: number;
-    hasOpenOrder: boolean;
-    entryPrice: number | null;
-  }) {
-    const url = `${this.apiUrl}/update-session`;
-    return this.http.put(url, data); // Sends a PUT request to update session data
+  // Fetch the active trading session for a user
+  getSession(userId: number, instrument: string = 'S&P 500'): Observable<any> {
+    const url = `${this.apiUrl}/get-session?userId=${userId}&instrument=${instrument}`;
+    return this.http.get<any>(url); // Replace `any` with a session model if available
   }
 
-  getActiveSession(userId: number = 2, instrument: string = 'S&P 500') {
-    const url = `${this.apiUrl}/active?userId=${userId}&instrument=${instrument}`;
-    return this.http.get<any>(url); // Replace `any` with a session model if you have it
+  // Update the session with state and stats
+  updateSession(sessionId: number, data: { 
+    currentProfitLoss?: number; 
+    totalProfitLoss?: number; 
+    totalOrders?: number; 
+    hasOpenOrder?: boolean; 
+    entryPrice?: number | null;
+    currentBarIndex?: number; // Added currentBarIndex
+  }) {
+    const url = `${this.apiUrl}/update-session`;
+    return this.http.put(url, { sessionId, ...data });
   }
   
+  // Complete the current trading day
+  completeDay(sessionId: number) {
+    const url = `${this.apiUrl}/${sessionId}/complete-day`;
+    return this.http.post(url, null);
+  }
 }
