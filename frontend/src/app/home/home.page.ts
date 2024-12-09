@@ -25,7 +25,6 @@ export class HomePage implements OnInit, AfterViewInit {
   }
   
   ngAfterViewInit(): void {
-    // Load data will be called after session is fetched
   }
   
   private fetchActiveSession() {
@@ -35,7 +34,7 @@ export class HomePage implements OnInit, AfterViewInit {
         if (session) {
           this.activeSession = session;
           console.log('Active session:', session);
-          this.loadDayData(); // Only load data after session is fetched
+          this.loadDayData(); 
         } else {
           console.error('No active session found. Cannot load day data.');
         }
@@ -62,22 +61,6 @@ export class HomePage implements OnInit, AfterViewInit {
     });
   }
   
-  onNextBar() {
-    if (this.lightweightChart) {
-      this.lightweightChart.showNextBar();
-  
-      if (this.activeSession) {
-        this.tradingSessionService.updateSession(this.activeSession.id, {
-          currentBarIndex: this.lightweightChart.getCurrentBarIndex(), // Use the getter here
-        }).subscribe({
-          next: () => console.log('Progress saved.'),
-          error: (err) => console.error('Error saving progress:', err),
-        });
-      }
-    }
-  }
-  
-
 
   getCurrentBarPrice(): number {
     if (this.lightweightChart) {
@@ -87,6 +70,20 @@ export class HomePage implements OnInit, AfterViewInit {
     console.warn('LightweightChartComponent is not initialized yet.');
     return 0;
   }
+
+  onNextBar() {
+    if (this.lightweightChart) {
+      this.lightweightChart.showNextBar();
+  
+      this.updateTradingSession(
+        { currentBarIndex: this.lightweightChart.getCurrentBarIndex() },
+        'Progress saved.',
+        'Error saving progress.'
+      );
+    }
+  }
+  
+  
   
 
   goLong(currentPrice: number) {
@@ -94,42 +91,37 @@ export class HomePage implements OnInit, AfterViewInit {
       this.hasOpenOrder = true;
       this.entryPrice = currentPrice;
   
-      this.tradingSessionService.updateSession(this.activeSession.id, {
-        currentBarIndex: this.lightweightChart.getCurrentBarIndex(),
-        hasOpenOrder: this.hasOpenOrder,
-        entryPrice: this.entryPrice,
-      }).subscribe({
-        next: () => console.log('Trade opened successfully.'),
-        error: (err) => console.error('Error opening trade:', err),
-      });
+      this.updateTradingSession(
+        {
+          currentBarIndex: this.lightweightChart.getCurrentBarIndex(),
+          hasOpenOrder: this.hasOpenOrder,
+          entryPrice: this.entryPrice,
+        },
+        'Trade opened successfully.',
+        'Error opening trade.'
+      );
     }
   }
+  
 
   goShort(currentPrice: number) {
-    if (!this.hasOpenOrder && this.activeSession?.id) {
+    if (!this.hasOpenOrder && this.activeSession) {
       this.hasOpenOrder = true;
       this.entryPrice = currentPrice;
   
-      this.tradingSessionService.updateSession(this.activeSession.id, {
-        currentProfitLoss: this.currentProfitLoss,
-        totalProfitLoss: this.totalProfitLoss,
-        totalOrders: this.totalOrders,
-        hasOpenOrder: this.hasOpenOrder,
-        entryPrice: this.entryPrice,
-      }).subscribe({
-        next: () => console.log('Short position opened successfully.'),
-        error: (err) => console.error('Error opening short position:', err),
-      });
+      this.updateTradingSession(
+        {
+          currentBarIndex: this.lightweightChart.getCurrentBarIndex(),
+          hasOpenOrder: this.hasOpenOrder,
+          entryPrice: this.entryPrice,
+        },
+        'Short position opened successfully.',
+        'Error opening short position.'
+      );
     }
   }
   
 
-  calculateOpenProfit(currentPrice: number): number {
-    if (this.hasOpenOrder && this.entryPrice !== null) {
-      return currentPrice - this.entryPrice;
-    }
-    return 0;
-  }
 
   closeTrade(exitPrice: number) {
     if (this.hasOpenOrder && this.activeSession) {
@@ -139,16 +131,49 @@ export class HomePage implements OnInit, AfterViewInit {
       this.hasOpenOrder = false;
       this.entryPrice = null;
   
-      this.tradingSessionService.updateSession(this.activeSession.id, {
-        currentBarIndex: this.lightweightChart.getCurrentBarIndex(),
-        totalProfitLoss: this.totalProfitLoss,
-        totalOrders: this.totalOrders,
-        hasOpenOrder: this.hasOpenOrder,
-        entryPrice: this.entryPrice,
-      }).subscribe({
-        next: () => console.log('Trade closed successfully.'),
-        error: (err) => console.error('Error closing trade:', err),
+      this.updateTradingSession(
+        {
+          currentBarIndex: this.lightweightChart.getCurrentBarIndex(),
+          totalProfitLoss: this.totalProfitLoss,
+          totalOrders: this.totalOrders,
+          hasOpenOrder: this.hasOpenOrder,
+          entryPrice: this.entryPrice,
+        },
+        'Trade closed successfully.',
+        'Error closing trade.'
+      );
+    }
+  }
+  
+  calculateOpenProfit(currentPrice: number): number {
+    if (this.hasOpenOrder && this.entryPrice !== null) {
+      return currentPrice - this.entryPrice;
+    }
+    return 0;
+  }
+
+
+  private updateTradingSession(data: {
+    currentBarIndex?: number;
+    currentProfitLoss?: number;
+    totalProfitLoss?: number;
+    totalOrders?: number;
+    hasOpenOrder?: boolean;
+    entryPrice?: number | null;
+  }, successMessage: string, errorMessage: string): void {
+    if (this.activeSession?.id) {
+      this.tradingSessionService.updateSession(this.activeSession.id, data).subscribe({
+        next: (updatedSession) => {
+          this.activeSession = updatedSession; // Sync the updated session
+          console.log(successMessage, updatedSession);
+        },
+        error: (err) => {
+          console.error(errorMessage, err);
+        },
       });
     }
   }
+  
 }
+
+
