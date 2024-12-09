@@ -52,5 +52,17 @@ export class TradingSessionService {
       })
     );
   }
+
+
+  getBarsForSession(sessionId: number): Observable<any> {
+    const url = `${this.apiUrl}/${sessionId}/bars`;
+    return this.http.get<any>(url).pipe(
+      catchError((error): Observable<never> => {
+        console.error('Error fetching bars for session:', error);
+        return throwError(() => new Error(error.message || 'Failed to fetch bars for session.'));
+      })
+    );
+  }
+  
 }
 
