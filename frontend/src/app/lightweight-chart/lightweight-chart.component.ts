@@ -18,10 +18,7 @@ export class LightweightChartComponent implements AfterViewInit, OnDestroy {
   private currentBarIndex = 0;
   private dayData: BarData[] = []; // Stores the day's data
 
-  public getCurrentBarIndex(): number {
-    return this.currentBarIndex;
-  }
-  
+ 
 
   ngAfterViewInit() {
     this.initializeChart();
@@ -72,7 +69,12 @@ export class LightweightChartComponent implements AfterViewInit, OnDestroy {
   
 
   public setData(data: BarData[]) {
-    // Map the data to use index as `time` directly and cast to `UTCTimestamp`
+    console.log('Setting chart data:', data); // Debugging log
+    if (!data || data.length === 0) {
+      console.error('No data provided to setData.');
+      return;
+    }
+    
     this.dayData = data.map((bar, index) => ({
       time: (index + 1) as UTCTimestamp, // Use bar index as `time`
       open: bar.open,
@@ -82,10 +84,10 @@ export class LightweightChartComponent implements AfterViewInit, OnDestroy {
     }));
     this.currentBarIndex = 1;
   
-    // Set initial chart data with the first bar only
+    console.log('Mapped data:', this.dayData); // Debugging log
+  
     this.candlestickSeries.setData([this.dayData[0]]);
   }
-  
   
 
   // Method to display the next bar
@@ -97,4 +99,13 @@ export class LightweightChartComponent implements AfterViewInit, OnDestroy {
       console.log("No more bars to show!");
     }
   }
+
+  public getTotalBars(): number {
+    return this.dayData.length;
+  }
+
+  public getCurrentBarIndex(): number {
+    return this.currentBarIndex;
+  }
+  
 }

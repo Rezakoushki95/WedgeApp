@@ -72,16 +72,49 @@ export class HomePage implements OnInit, AfterViewInit {
   }
 
   onNextBar() {
-    if (this.lightweightChart) {
-      this.lightweightChart.showNextBar();
+    if (!this.lightweightChart || !this.activeSession) {
+      console.error('Chart or session is not initialized.');
+      return;
+    }
   
-      this.updateTradingSession(
-        { currentBarIndex: this.lightweightChart.getCurrentBarIndex() },
-        'Progress saved.',
-        'Error saving progress.'
-      );
+    this.lightweightChart.showNextBar();
+  
+    const currentBarIndex = this.lightweightChart.getCurrentBarIndex();
+  
+    // Check if we've reached the last bar for the day
+    if (currentBarIndex === this.lightweightChart.getTotalBars()) {
+      console.log('Reached the end of the trading day.');
+  
+      // Call completeDay to handle end-of-day logic
+      this.tradingSessionService.completeDay(this.activeSession.id).subscribe({
+        next: () => {
+          console.log('Trading day completed. Fetching next day data.');
+  
+          // Fetch the next day data and reset the chart
+          this.marketDataService.getBarsForSession(this.activeSession.id).subscribe({
+            next: (bars) => {
+              this.lightweightChart.setData(bars);
+            },
+            error: (err) => console.error('Error fetching next day data:', err),
+          });
+        },
+        error: (err) => console.error('Error completing trading day:', err),
+      });
+  
+      return; // End the method here as it's the last bar
+    }
+  
+    // Checkpoint logic: Update the backend every 5 bars
+    if (currentBarIndex % 5 === 0) {
+      this.tradingSessionService.updateSession(this.activeSession.id, {
+        currentBarIndex: currentBarIndex,
+      }).subscribe({
+        next: () => console.log(`Session updated at bar ${currentBarIndex}.`),
+        error: (err) => console.error('Error updating session:', err),
+      });
     }
   }
+  
   
   
   

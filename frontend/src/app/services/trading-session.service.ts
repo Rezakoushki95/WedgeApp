@@ -44,7 +44,7 @@ export class TradingSessionService {
   
   
   completeDay(sessionId: number) {
-    const url = `${this.apiUrl}/${sessionId}/complete-day`;
+    const url = `${this.apiUrl}/complete-day?sessionId=${sessionId}`;
     return this.http.post(url, null).pipe(
       catchError((error): Observable<never> => {
         console.error('Error completing trading day:', error);
@@ -52,6 +52,8 @@ export class TradingSessionService {
       })
     );
   }
+  
+  
 
 
   getBarsForSession(sessionId: number): Observable<any> {
