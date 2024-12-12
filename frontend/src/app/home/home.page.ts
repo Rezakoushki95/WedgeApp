@@ -17,6 +17,7 @@ export class HomePage implements OnInit, AfterViewInit {
   hasOpenOrder = false;
   entryPrice: number | null = null;
   activeSession: any;
+  isShortTrade: boolean = false;
 
   constructor(private marketDataService: MarketDataService, private tradingSessionService: TradingSessionService) {}
 
@@ -123,6 +124,7 @@ export class HomePage implements OnInit, AfterViewInit {
     if (!this.hasOpenOrder && this.activeSession) {
       this.hasOpenOrder = true;
       this.entryPrice = currentPrice;
+      this.isShortTrade = false; // This is a long trade
   
       this.updateTradingSession(
         {
@@ -141,6 +143,7 @@ export class HomePage implements OnInit, AfterViewInit {
     if (!this.hasOpenOrder && this.activeSession) {
       this.hasOpenOrder = true;
       this.entryPrice = currentPrice;
+      this.isShortTrade = true; // This is a short trade
   
       this.updateTradingSession(
         {
@@ -158,7 +161,13 @@ export class HomePage implements OnInit, AfterViewInit {
 
   closeTrade(exitPrice: number) {
     if (this.hasOpenOrder && this.activeSession) {
-      const tradeProfitLoss = exitPrice - (this.entryPrice ?? 0);
+      let tradeProfitLoss = 0;
+      if (this.isShortTrade) {
+        tradeProfitLoss = (this.entryPrice ?? 0) - exitPrice; // Profit for short trade
+      } else {
+        tradeProfitLoss = exitPrice - (this.entryPrice ?? 0); // Profit for long trade
+      }
+  
       this.totalProfitLoss += tradeProfitLoss;
       this.totalOrders += 1;
       this.hasOpenOrder = false;
@@ -172,19 +181,26 @@ export class HomePage implements OnInit, AfterViewInit {
           hasOpenOrder: this.hasOpenOrder,
           entryPrice: this.entryPrice,
         },
-        'Trade closed successfully.',
+        `Trade closed successfully. Profit/Loss: ${tradeProfitLoss.toFixed(2)}`,
         'Error closing trade.'
       );
     }
   }
   
+  
   calculateOpenProfit(currentPrice: number): number {
     if (this.hasOpenOrder && this.entryPrice !== null) {
-      return currentPrice - this.entryPrice;
+      if (this.isShortTrade) {
+  
+        return (this.entryPrice ?? 0) - currentPrice;
+      } else {
+        
+        return currentPrice - (this.entryPrice ?? 0);
+      }
     }
     return 0;
   }
-
+  
 
   private updateTradingSession(data: {
     currentBarIndex?: number;
