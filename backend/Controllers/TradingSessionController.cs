@@ -54,7 +54,7 @@ namespace backend.Controllers
         {
             try
             {
-                await _tradingSessionService.UpdateSession(
+                var updatedSession = await _tradingSessionService.UpdateSession(
                     updateDto.SessionId,
                     updateDto.CurrentBarIndex,
                     updateDto.HasOpenOrder,
@@ -62,13 +62,15 @@ namespace backend.Controllers
                     updateDto.TotalProfitLoss,
                     updateDto.TotalOrders
                 );
-                return Ok(new { message = "Session updated successfully." });
+
+                return Ok(updatedSession); // Returns the response DTO
             }
             catch (Exception ex)
             {
                 return BadRequest(new { message = ex.Message });
             }
         }
+
 
         [HttpPost("complete-day")]
         public async Task<IActionResult> CompleteDay(int sessionId)

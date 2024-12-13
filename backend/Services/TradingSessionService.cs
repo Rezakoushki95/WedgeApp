@@ -1,4 +1,5 @@
 using backend.Data;
+using backend.DTOs;
 using backend.Models;
 using Microsoft.EntityFrameworkCore;
 
@@ -88,8 +89,9 @@ public class TradingSessionService
     }
 
     // Update the session state
-    public async Task UpdateSession(int sessionId, int? currentBarIndex = null, bool? hasOpenOrder = null,
-                                    decimal? entryPrice = null, decimal? totalProfitLoss = null, int? totalOrders = null)
+    public async Task<TradingSessionResponseDto> UpdateSession(
+     int sessionId, int? currentBarIndex = null, bool? hasOpenOrder = null,
+     decimal? entryPrice = null, decimal? totalProfitLoss = null, int? totalOrders = null)
     {
         var session = await _context.TradingSessions.FindAsync(sessionId);
 
@@ -100,19 +102,11 @@ public class TradingSessionService
 
         // Validation
         if (currentBarIndex.HasValue && currentBarIndex.Value < 0)
-        {
             throw new ArgumentException("CurrentBarIndex cannot be negative.");
-        }
-
         if (totalOrders.HasValue && totalOrders.Value < 0)
-        {
             throw new ArgumentException("TotalOrders cannot be negative.");
-        }
-
         if (entryPrice.HasValue && entryPrice.Value <= 0)
-        {
             throw new ArgumentException("EntryPrice must be greater than zero.");
-        }
 
         // Apply updates
         if (currentBarIndex.HasValue) session.CurrentBarIndex = currentBarIndex.Value;
@@ -122,7 +116,45 @@ public class TradingSessionService
         if (totalOrders.HasValue) session.TotalOrders = totalOrders.Value;
 
         await _context.SaveChangesAsync();
+
+        // Map the updated session to the response DTO
+        return new TradingSessionResponseDto
+        {
+            SessionId = session.Id,
+            Instrument = session.Instrument,
+            TradingDay = session.TradingDay,
+            CurrentBarIndex = session.CurrentBarIndex,
+            HasOpenOrder = session.HasOpenOrder,
+            EntryPrice = session.EntryPrice,
+            TotalProfitLoss = session.TotalProfitLoss,
+            TotalOrders = session.TotalOrders,
+            OpenProfit = await CalculateOpenProfit(session)
+
+        };
     }
+
+    // Example of a helper method for computed fields
+    private async Task<decimal> CalculateOpenProfit(TradingSession session)
+    {
+        // Validate session state
+        if (!session.HasOpenOrder || session.EntryPrice == null)
+            return 0;
+
+        // Retrieve the current bar
+        var currentBar = await _context.FiveMinuteBars
+            .Where(bar => bar.MarketDataDay.Date == session.TradingDay)
+            .OrderBy(bar => bar.Timestamp)
+            .Skip(session.CurrentBarIndex) // Skip to the current bar index
+            .FirstOrDefaultAsync();
+
+        if (currentBar == null)
+            throw new Exception("Current bar not found for the given trading day and index.");
+
+        // Calculate profit based on the current price
+        var currentPrice = currentBar.Close; // Use the closing price of the current bar
+        return (currentPrice - session.EntryPrice.Value) * (session.HasOpenOrder ? 1 : -1);
+    }
+
 
     public async Task CompleteDay(int sessionId)
     {
