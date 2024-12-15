@@ -2,6 +2,8 @@ import { Component, AfterViewInit, OnDestroy, ElementRef, ViewChild } from '@ang
 import { createChart, IChartApi, ISeriesApi, UTCTimestamp } from 'lightweight-charts';
 import { BarData } from '../models/bar-data.model';
 
+
+
 @Component({
   selector: 'app-lightweight-chart',
   template: `<div #chartContainer class="chart-container"></div>`,
@@ -18,7 +20,6 @@ export class LightweightChartComponent implements AfterViewInit, OnDestroy {
   private currentBarIndex = 0;
   private dayData: BarData[] = []; // Stores the day's data
 
- 
 
   ngAfterViewInit() {
     this.initializeChart();
@@ -30,6 +31,7 @@ export class LightweightChartComponent implements AfterViewInit, OnDestroy {
       this.resizeObserver.disconnect();
     }
   }
+
 
   private initializeChart() {
     const containerWidth = this.chartContainer.nativeElement.clientWidth;
@@ -66,15 +68,15 @@ export class LightweightChartComponent implements AfterViewInit, OnDestroy {
     }
     return null; // Return null if no valid current bar
   }
-  
 
-  public setData(data: BarData[]) {
-    console.log('Setting chart data:', data); // Debugging log
+  public setData(data: BarData[], startBarIndex: number = 0) {
+    console.log('Setting chart data:', data, 'Starting at bar index:', startBarIndex);
+
     if (!data || data.length === 0) {
       console.error('No data provided to setData.');
       return;
     }
-    
+
     this.dayData = data.map((bar, index) => ({
       time: (index + 1) as UTCTimestamp, // Use bar index as `time`
       open: bar.open,
@@ -82,13 +84,24 @@ export class LightweightChartComponent implements AfterViewInit, OnDestroy {
       low: bar.low,
       close: bar.close,
     }));
-    this.currentBarIndex = 1;
-  
-    console.log('Mapped data:', this.dayData); // Debugging log
-  
-    this.candlestickSeries.setData([this.dayData[0]]);
+
+    // Ensure the starting bar index shows the first bar if index is 0
+    this.currentBarIndex = startBarIndex > 0 ? startBarIndex : 1;
+
+    if (!this.chart || !this.candlestickSeries) {
+      console.error('Chart or candlestick series is not initialized. Retrying in 50ms...');
+      setTimeout(() => this.setData(data, startBarIndex), 50);
+      return;
+    }
+
+    console.log('Chart initialized, setting data from bar:', this.currentBarIndex);
+    // Display all bars up to the current bar index
+    this.candlestickSeries.setData(this.dayData.slice(0, this.currentBarIndex));
   }
-  
+
+
+
+
 
   // Method to display the next bar
   public showNextBar() {
@@ -107,5 +120,5 @@ export class LightweightChartComponent implements AfterViewInit, OnDestroy {
   public getCurrentBarIndex(): number {
     return this.currentBarIndex;
   }
-  
+
 }

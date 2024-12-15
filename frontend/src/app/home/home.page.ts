@@ -19,15 +19,15 @@ export class HomePage implements OnInit, AfterViewInit {
   activeSession: any;
   isShortTrade: boolean = false;
 
-  constructor(private marketDataService: MarketDataService, private tradingSessionService: TradingSessionService) {}
+  constructor(private marketDataService: MarketDataService, private tradingSessionService: TradingSessionService) { }
 
   ngOnInit(): void {
     this.fetchActiveSession();
   }
-  
+
   ngAfterViewInit(): void {
   }
-  
+
   private fetchActiveSession() {
     const encodedInstrument = encodeURIComponent('S&P 500');
     this.tradingSessionService.getSession(2, encodedInstrument).subscribe({
@@ -35,7 +35,7 @@ export class HomePage implements OnInit, AfterViewInit {
         if (session) {
           this.activeSession = session;
           console.log('Active session:', session);
-          this.loadDayData(); 
+          this.loadDayData();
         } else {
           console.error('No active session found. Cannot load day data.');
         }
@@ -45,23 +45,28 @@ export class HomePage implements OnInit, AfterViewInit {
       }
     });
   }
-  
+
   private loadDayData() {
     if (!this.activeSession) {
       console.error('No active session found. Cannot load day data.');
       return;
     }
-  
+
     this.marketDataService.getBarsForSession(this.activeSession.id).subscribe({
       next: (bars) => {
         if (this.lightweightChart) {
-          this.lightweightChart.setData(bars);
+          console.log('Passing bars and current bar index to chart:', bars, this.activeSession.currentBarIndex);
+          this.lightweightChart.setData(bars, this.activeSession.currentBarIndex); // Pass bars and index
+        } else {
+          console.error('LightweightChartComponent is not initialized.');
         }
       },
       error: (error) => console.error('Error fetching market data:', error),
     });
   }
-  
+
+
+
 
   getCurrentBarPrice(): number {
     if (this.lightweightChart) {
@@ -77,20 +82,20 @@ export class HomePage implements OnInit, AfterViewInit {
       console.error('Chart or session is not initialized.');
       return;
     }
-  
+
     this.lightweightChart.showNextBar();
-  
+
     const currentBarIndex = this.lightweightChart.getCurrentBarIndex();
-  
+
     // Check if we've reached the last bar for the day
     if (currentBarIndex === this.lightweightChart.getTotalBars()) {
       console.log('Reached the end of the trading day.');
-  
+
       // Call completeDay to handle end-of-day logic
       this.tradingSessionService.completeDay(this.activeSession.id).subscribe({
         next: () => {
           console.log('Trading day completed. Fetching next day data.');
-  
+
           // Fetch the next day data and reset the chart
           this.marketDataService.getBarsForSession(this.activeSession.id).subscribe({
             next: (bars) => {
@@ -101,10 +106,10 @@ export class HomePage implements OnInit, AfterViewInit {
         },
         error: (err) => console.error('Error completing trading day:', err),
       });
-  
+
       return; // End the method here as it's the last bar
     }
-  
+
     // Checkpoint logic: Update the backend every 5 bars
     if (currentBarIndex % 5 === 0) {
       this.tradingSessionService.updateSession(this.activeSession.id, {
@@ -115,17 +120,17 @@ export class HomePage implements OnInit, AfterViewInit {
       });
     }
   }
-  
-  
-  
-  
+
+
+
+
 
   goLong(currentPrice: number) {
     if (!this.hasOpenOrder && this.activeSession) {
       this.hasOpenOrder = true;
       this.entryPrice = currentPrice;
       this.isShortTrade = false; // This is a long trade
-  
+
       this.updateTradingSession(
         {
           currentBarIndex: this.lightweightChart.getCurrentBarIndex(),
@@ -137,14 +142,14 @@ export class HomePage implements OnInit, AfterViewInit {
       );
     }
   }
-  
+
 
   goShort(currentPrice: number) {
     if (!this.hasOpenOrder && this.activeSession) {
       this.hasOpenOrder = true;
       this.entryPrice = currentPrice;
       this.isShortTrade = true; // This is a short trade
-  
+
       this.updateTradingSession(
         {
           currentBarIndex: this.lightweightChart.getCurrentBarIndex(),
@@ -156,7 +161,7 @@ export class HomePage implements OnInit, AfterViewInit {
       );
     }
   }
-  
+
 
 
   closeTrade(exitPrice: number) {
@@ -167,12 +172,12 @@ export class HomePage implements OnInit, AfterViewInit {
       } else {
         tradeProfitLoss = exitPrice - (this.entryPrice ?? 0); // Profit for long trade
       }
-  
+
       this.totalProfitLoss += tradeProfitLoss;
       this.totalOrders += 1;
       this.hasOpenOrder = false;
       this.entryPrice = null;
-  
+
       this.updateTradingSession(
         {
           currentBarIndex: this.lightweightChart.getCurrentBarIndex(),
@@ -186,21 +191,21 @@ export class HomePage implements OnInit, AfterViewInit {
       );
     }
   }
-  
-  
+
+
   calculateOpenProfit(currentPrice: number): number {
     if (this.hasOpenOrder && this.entryPrice !== null) {
       if (this.isShortTrade) {
-  
+
         return (this.entryPrice ?? 0) - currentPrice;
       } else {
-        
+
         return currentPrice - (this.entryPrice ?? 0);
       }
     }
     return 0;
   }
-  
+
 
   private updateTradingSession(data: {
     currentBarIndex?: number;
@@ -222,7 +227,7 @@ export class HomePage implements OnInit, AfterViewInit {
       });
     }
   }
-  
+
 }
 
 
