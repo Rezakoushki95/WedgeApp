@@ -128,9 +128,8 @@ public class TradingSessionService
             EntryPrice = session.EntryPrice,
             TotalProfitLoss = session.TotalProfitLoss,
             TotalOrders = session.TotalOrders,
-            OpenProfit = await CalculateOpenProfit(session)
-
         };
+
     }
 
     // Example of a helper method for computed fields
