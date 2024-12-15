@@ -1,12 +1,11 @@
 export interface TradingSession {
-    id: number;
-    userId: number;
-    instrument: string;
-    tradingDay: string;
-    currentBarIndex: number;
-    hasOpenOrder: boolean;
-    entryPrice: number | null;
-    totalProfitLoss: number;
-    totalOrders: number;
-  }
-  
+  sessionId: number;
+  instrument: string;
+  tradingDay: string; // ISO string format
+  currentBarIndex: number;
+  hasOpenOrder: boolean;
+  entryPrice: number | null;
+  totalProfitLoss: number;
+  totalOrders: number;
+  openProfit: number; // New field for calculated open profit
+}
