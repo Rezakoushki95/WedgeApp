@@ -28,6 +28,15 @@ export class HomePage implements OnInit, AfterViewInit {
   ngAfterViewInit(): void {
   }
 
+  ionViewDidEnter(): void {
+    console.log('Page entered, reinitializing chart.');
+    if (this.activeSession) {
+      this.loadDayData(); // Re-fetch and reinitialize chart
+    } else {
+      this.fetchActiveSession();
+    }
+  }
+
   private fetchActiveSession() {
     const encodedInstrument = encodeURIComponent('S&P 500');
     this.tradingSessionService.getSession(2, encodedInstrument).subscribe({
