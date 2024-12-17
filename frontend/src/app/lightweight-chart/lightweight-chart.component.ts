@@ -21,10 +21,6 @@ export class LightweightChartComponent implements AfterViewInit, OnDestroy {
   private dayData: BarData[] = []; // Stores the day's data
   private chartInitialized = false;
 
-
-
-
-
   ngAfterViewInit() {
     if (!this.chartInitialized) {
       this.initializeChart();
@@ -32,7 +28,6 @@ export class LightweightChartComponent implements AfterViewInit, OnDestroy {
       this.chartInitialized = true;
     }
   }
-
 
   ngOnDestroy() {
     if (this.resizeObserver) {
@@ -125,6 +120,11 @@ export class LightweightChartComponent implements AfterViewInit, OnDestroy {
     if (this.currentBarIndex < this.dayData.length) {
       this.candlestickSeries.update(this.dayData[this.currentBarIndex]);
       this.currentBarIndex += 1;
+
+      // Adjust the visible range to show all bars up to the current index
+      const from = this.dayData[0]?.time ?? 0; // First bar time
+      const to = this.dayData[this.currentBarIndex - 1]?.time ?? 0; // Current bar time
+      this.chart.timeScale().setVisibleRange({ from, to });
     } else {
       console.log("No more bars to show!");
     }
