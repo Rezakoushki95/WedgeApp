@@ -1,11 +1,12 @@
-﻿using Microsoft.EntityFrameworkCore.Migrations;
+﻿using System;
+using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
 namespace backend.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialSetup : Migration
+    public partial class InitialCreate : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -16,7 +17,7 @@ namespace backend.Migrations
                 {
                     Id = table.Column<int>(type: "INTEGER", nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
-                    Month = table.Column<string>(type: "TEXT", nullable: false)
+                    Month = table.Column<DateTime>(type: "TEXT", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -29,8 +30,8 @@ namespace backend.Migrations
                 {
                     Id = table.Column<int>(type: "INTEGER", nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
-                    Username = table.Column<string>(type: "TEXT", nullable: true),
-                    PasswordHash = table.Column<string>(type: "TEXT", nullable: true),
+                    Username = table.Column<string>(type: "TEXT", nullable: false),
+                    PasswordHash = table.Column<string>(type: "TEXT", nullable: false),
                     TotalProfit = table.Column<decimal>(type: "TEXT", nullable: false),
                     TotalOrders = table.Column<int>(type: "INTEGER", nullable: false),
                     TotalTradingDays = table.Column<int>(type: "INTEGER", nullable: false)
@@ -46,7 +47,7 @@ namespace backend.Migrations
                 {
                     Id = table.Column<int>(type: "INTEGER", nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
-                    Date = table.Column<string>(type: "TEXT", nullable: false),
+                    Date = table.Column<DateTime>(type: "TEXT", nullable: false),
                     MarketDataMonthId = table.Column<int>(type: "INTEGER", nullable: false)
                 },
                 constraints: table =>
@@ -94,10 +95,10 @@ namespace backend.Migrations
                         .Annotation("Sqlite:Autoincrement", true),
                     UserId = table.Column<int>(type: "INTEGER", nullable: false),
                     Instrument = table.Column<string>(type: "TEXT", nullable: false),
+                    TradingDay = table.Column<DateTime>(type: "TEXT", nullable: false),
                     CurrentBarIndex = table.Column<int>(type: "INTEGER", nullable: false),
                     HasOpenOrder = table.Column<bool>(type: "INTEGER", nullable: false),
                     EntryPrice = table.Column<decimal>(type: "TEXT", nullable: true),
-                    CurrentProfitLoss = table.Column<decimal>(type: "TEXT", nullable: true),
                     TotalProfitLoss = table.Column<decimal>(type: "TEXT", nullable: false),
                     TotalOrders = table.Column<int>(type: "INTEGER", nullable: false)
                 },
@@ -144,8 +145,7 @@ namespace backend.Migrations
                 {
                     Id = table.Column<int>(type: "INTEGER", nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
-                    Date = table.Column<string>(type: "TEXT", nullable: false),
-                    Time = table.Column<string>(type: "TEXT", nullable: false),
+                    Timestamp = table.Column<DateTime>(type: "TEXT", nullable: false),
                     Open = table.Column<decimal>(type: "TEXT", nullable: false),
                     High = table.Column<decimal>(type: "TEXT", nullable: false),
                     Low = table.Column<decimal>(type: "TEXT", nullable: false),
@@ -197,6 +197,12 @@ namespace backend.Migrations
                 name: "IX_TradingSessions_UserId",
                 table: "TradingSessions",
                 column: "UserId",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_TradingSessions_UserId_Instrument",
+                table: "TradingSessions",
+                columns: new[] { "UserId", "Instrument" },
                 unique: true);
         }
 

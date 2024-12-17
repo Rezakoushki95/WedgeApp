@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, AfterViewInit } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import { LightweightChartComponent } from '../lightweight-chart/lightweight-chart.component';
 import { MarketDataService } from '../services/market-data.service';
 import { TradingSessionService } from '../services/trading-session.service';
@@ -8,7 +8,7 @@ import { TradingSessionService } from '../services/trading-session.service';
   templateUrl: './home.page.html',
   styleUrls: ['./home.page.scss']
 })
-export class HomePage implements OnInit, AfterViewInit {
+export class HomePage implements OnInit {
   @ViewChild(LightweightChartComponent) lightweightChart!: LightweightChartComponent;
 
   currentProfitLoss = 0;
@@ -22,11 +22,9 @@ export class HomePage implements OnInit, AfterViewInit {
   constructor(private marketDataService: MarketDataService, private tradingSessionService: TradingSessionService) { }
 
   ngOnInit(): void {
-    this.fetchActiveSession();
+    // this.fetchActiveSession();
   }
 
-  ngAfterViewInit(): void {
-  }
 
   ionViewDidEnter(): void {
     console.log('Page entered, reinitializing chart.');

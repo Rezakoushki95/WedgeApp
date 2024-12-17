@@ -8,7 +8,7 @@ public class MarketDataService
     private readonly HttpClient _httpClient;
     private readonly AppDbContext _context;
     private readonly string _apiKey;
-    private const string ApiUrlTemplate = "https://www.alphavantage.co/query?function=TIME_SERIES_INTRADAY&symbol=SPY&interval=5min&month={0}&outputsize=full&extended_hours=false&apikey={1}";
+    private const string ApiUrlTemplate = "https://www.alphavantage.co/query?function=TIME_SERIES_INTRADAY&symbol=SPY&adjusted=false&interval=5min&month={0}&outputsize=full&extended_hours=false&apikey={1}";
 
 
     public MarketDataService(HttpClient httpClient, AppDbContext context, IConfiguration configuration)
@@ -124,14 +124,15 @@ public class MarketDataService
             .GroupBy(entry => DateTime.Parse(entry.Key).Date)
             .ToDictionary(
                 g => g.Key,
-                g => g.Select(entry => new FiveMinuteBar
-                {
-                    Timestamp = DateTime.Parse(entry.Key),
-                    Open = entry.Value.Open,
-                    High = entry.Value.High,
-                    Low = entry.Value.Low,
-                    Close = entry.Value.Close
-                }).ToList()
+           g => g.Select(entry => new FiveMinuteBar
+           {
+               Timestamp = DateTime.Parse(entry.Key),
+               Open = entry.Value.Open * 10,
+               High = entry.Value.High * 10,
+               Low = entry.Value.Low * 10,
+               Close = entry.Value.Close * 10
+           }).ToList()
+
             );
 
         foreach (var dayData in groupedByDay.OrderBy(d => d.Key))
