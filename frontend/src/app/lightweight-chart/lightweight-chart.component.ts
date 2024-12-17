@@ -10,7 +10,7 @@ import { BarData } from '../models/bar-data.model';
     '.chart-container { width: 100%; height: 100%; }'
   ]
 })
-export class LightweightChartComponent implements AfterViewInit, OnDestroy {
+export class LightweightChartComponent implements AfterViewInit {
   @ViewChild('chartContainer', { static: true }) chartContainer!: ElementRef;
   private chart!: IChartApi;
   private candlestickSeries!: ISeriesApi<"Candlestick">;
@@ -27,9 +27,16 @@ export class LightweightChartComponent implements AfterViewInit, OnDestroy {
     }
   }
 
-  ngOnDestroy() {
+
+  public cleanup() {
+    console.log('Disconnecting ResizeObserver and cleaning up chart.');
     if (this.resizeObserver) {
       this.resizeObserver.disconnect();
+      this.resizeObserver = null as unknown as ResizeObserver;
+    }
+    if (this.chart) {
+      this.chart.remove();
+      this.chart = null as unknown as IChartApi;
     }
   }
 

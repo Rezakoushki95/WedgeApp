@@ -8,7 +8,7 @@ import { TradingSessionService } from '../services/trading-session.service';
   templateUrl: './home.page.html',
   styleUrls: ['./home.page.scss']
 })
-export class HomePage implements OnInit {
+export class HomePage {
   @ViewChild(LightweightChartComponent) lightweightChart!: LightweightChartComponent;
 
   currentProfitLoss = 0;
@@ -21,12 +21,8 @@ export class HomePage implements OnInit {
 
   constructor(private marketDataService: MarketDataService, private tradingSessionService: TradingSessionService) { }
 
-  ngOnInit(): void {
-    // this.fetchActiveSession();
-  }
 
-
-  ionViewDidEnter(): void {
+  ionViewWillEnter(): void {
     console.log('Page entered, reinitializing chart.');
     if (this.activeSession) {
       this.loadDayData(); // Re-fetch and reinitialize chart
@@ -34,6 +30,11 @@ export class HomePage implements OnInit {
       this.fetchActiveSession();
     }
   }
+
+  ionViewWillLeave(): void {
+    this.lightweightChart?.cleanup(); // Tell the child to clean itself up
+  }
+
 
   private fetchActiveSession() {
     const encodedInstrument = encodeURIComponent('S&P 500');
