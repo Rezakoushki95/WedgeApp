@@ -41,7 +41,7 @@ export class LightweightChartComponent implements AfterViewInit, OnDestroy {
       width: containerWidth,
       height: containerHeight,
       timeScale: {
-        barSpacing: 20, // Default bar spacing
+        // barSpacing: 20, // Default bar spacing
         fixLeftEdge: true,
         tickMarkFormatter: (time: UTCTimestamp) => {
           return Math.round(time).toString(); // Format x-axis ticks as bar numbers
@@ -123,15 +123,9 @@ export class LightweightChartComponent implements AfterViewInit, OnDestroy {
     const from = this.dayData[0]?.time ?? 0; // Always start from the first bar
     const to = this.dayData[this.currentBarIndex - 1]?.time ?? 0; // End at the current bar
 
-    if (this.currentBarIndex <= 10) {
-      // For the first 10 bars: maintain space for 10 bars
-      const virtualTo = this.dayData[9]?.time ?? (from + 9) as UTCTimestamp;
-      this.chart.timeScale().setVisibleRange({ from, to: virtualTo });
-      console.log(`First 10 bars: Adjusted range from ${from} to ${virtualTo}`);
-    } else {
-      // After 10 bars, show all bars dynamically
-      this.chart.timeScale().setVisibleRange({ from, to });
-      console.log(`After 10 bars: Adjusted range from ${from} to ${to}`);
-    }
+    // After 10 bars, show all bars dynamically
+    this.chart.timeScale().setVisibleRange({ from, to });
+    console.log(`After 10 bars: Adjusted range from ${from} to ${to}`);
+
   }
 }
