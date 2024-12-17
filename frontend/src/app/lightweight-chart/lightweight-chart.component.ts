@@ -2,8 +2,6 @@ import { Component, AfterViewInit, OnDestroy, ElementRef, ViewChild } from '@ang
 import { createChart, IChartApi, ISeriesApi, UTCTimestamp } from 'lightweight-charts';
 import { BarData } from '../models/bar-data.model';
 
-
-
 @Component({
   selector: 'app-lightweight-chart',
   template: `<div #chartContainer class="chart-container"></div>`,
@@ -35,7 +33,6 @@ export class LightweightChartComponent implements AfterViewInit, OnDestroy {
     }
   }
 
-
   private initializeChart() {
     const containerWidth = this.chartContainer.nativeElement.clientWidth;
     const containerHeight = this.chartContainer.nativeElement.clientHeight;
@@ -44,15 +41,16 @@ export class LightweightChartComponent implements AfterViewInit, OnDestroy {
       width: containerWidth,
       height: containerHeight,
       timeScale: {
-        rightOffset: 9, // Create space for 9 virtual bars
-        barSpacing: 20, // Adjust spacing for clear visibility
-        fixLeftEdge: true, // Prevent panning past the first bar
+        barSpacing: 20, // Default bar spacing
+        fixLeftEdge: true,
+        tickMarkFormatter: (time: UTCTimestamp) => {
+          return Math.round(time).toString(); // Format x-axis ticks as bar numbers
+        },
       },
     });
 
     this.candlestickSeries = this.chart.addCandlestickSeries();
   }
-
 
   private setupResizeObserver() {
     this.resizeObserver = new ResizeObserver(entries => {
@@ -66,9 +64,9 @@ export class LightweightChartComponent implements AfterViewInit, OnDestroy {
 
   public getCurrentBar(): BarData | null {
     if (this.currentBarIndex > 0 && this.currentBarIndex <= this.dayData.length) {
-      return this.dayData[this.currentBarIndex - 1]; // Return the current bar
+      return this.dayData[this.currentBarIndex - 1];
     }
-    return null; // Return null if no valid current bar
+    return null;
   }
 
   public setData(data: BarData[], startBarIndex: number = 0) {
@@ -95,36 +93,19 @@ export class LightweightChartComponent implements AfterViewInit, OnDestroy {
       return;
     }
 
-    console.log('Chart initialized, setting data from bar:', this.currentBarIndex);
-
-    // Display all bars up to the current bar index
     this.candlestickSeries.setData(this.dayData.slice(0, this.currentBarIndex));
 
-    // Adjust visible range to simulate 10 bars filling the screen
-    const visibleBars = Math.max(10, this.currentBarIndex + 9); // Ensure space for 10 bars
-    const from: UTCTimestamp = Math.max(-9, this.dayData[0]?.time - 9) as UTCTimestamp;
-    const to: UTCTimestamp = this.dayData[this.currentBarIndex - 1]?.time ?? 0;
-
-    this.chart.timeScale().setVisibleRange({ from, to });
+    // Adjust the viewport consistently
+    this.adjustViewport();
   }
 
-
-
-
-
-
-
-
-  // Method to display the next bar
   public showNextBar() {
     if (this.currentBarIndex < this.dayData.length) {
       this.candlestickSeries.update(this.dayData[this.currentBarIndex]);
       this.currentBarIndex += 1;
 
-      // Adjust the visible range to show all bars up to the current index
-      const from = this.dayData[0]?.time ?? 0; // First bar time
-      const to = this.dayData[this.currentBarIndex - 1]?.time ?? 0; // Current bar time
-      this.chart.timeScale().setVisibleRange({ from, to });
+      // Adjust the viewport consistently
+      this.adjustViewport();
     } else {
       console.log("No more bars to show!");
     }
@@ -138,4 +119,19 @@ export class LightweightChartComponent implements AfterViewInit, OnDestroy {
     return this.currentBarIndex;
   }
 
+  private adjustViewport() {
+    const from = this.dayData[0]?.time ?? 0; // Always start from the first bar
+    const to = this.dayData[this.currentBarIndex - 1]?.time ?? 0; // End at the current bar
+
+    if (this.currentBarIndex <= 10) {
+      // For the first 10 bars: maintain space for 10 bars
+      const virtualTo = this.dayData[9]?.time ?? (from + 9) as UTCTimestamp;
+      this.chart.timeScale().setVisibleRange({ from, to: virtualTo });
+      console.log(`First 10 bars: Adjusted range from ${from} to ${virtualTo}`);
+    } else {
+      // After 10 bars, show all bars dynamically
+      this.chart.timeScale().setVisibleRange({ from, to });
+      console.log(`After 10 bars: Adjusted range from ${from} to ${to}`);
+    }
+  }
 }
