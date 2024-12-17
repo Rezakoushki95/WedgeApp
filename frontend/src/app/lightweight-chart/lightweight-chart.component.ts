@@ -41,11 +41,20 @@ export class LightweightChartComponent implements AfterViewInit, OnDestroy {
       width: containerWidth,
       height: containerHeight,
       timeScale: {
-        // barSpacing: 20, // Default bar spacing
         fixLeftEdge: true,
+        lockVisibleTimeRangeOnResize: true,
         tickMarkFormatter: (time: UTCTimestamp) => {
-          return Math.round(time).toString(); // Format x-axis ticks as bar numbers
+          return Math.round(time).toString();
         },
+      },
+      handleScroll: {
+        vertTouchDrag: false,
+        horzTouchDrag: false,
+      },
+      handleScale: {
+        axisPressedMouseMove: false,
+        pinch: false,
+        mouseWheel: false,
       },
     });
 
