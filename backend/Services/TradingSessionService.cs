@@ -166,6 +166,11 @@ public class TradingSessionService
             throw new Exception("Session not found.");
         }
 
+        if (session.HasOpenOrder)
+        {
+            throw new Exception("Cannot complete the day with an open order. Please close your trade first.");
+        }
+
         var user = session.User ?? throw new Exception("User not associated with the session.");
 
         // Mark the current day as accessed

@@ -71,7 +71,6 @@ namespace backend.Controllers
             }
         }
 
-
         [HttpPost("complete-day")]
         public async Task<IActionResult> CompleteDay(int sessionId)
         {
