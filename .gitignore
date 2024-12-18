@@ -3,13 +3,39 @@
 
 # Angular
 /frontend/dist
+/frontend/.angular/cache
+
+# Environment Files
+/frontend/src/environments/*.ts
 
 # .NET
 /backend/bin
 /backend/obj
 /backend/appsettings.json
+/backend/appsettings.*.json
 
+# iOS (inside frontend)
+frontend/ios/App/Pods/
+frontend/ios/App/Podfile.lock
+frontend/ios/App/build/
+frontend/ios/App/DerivedData/
+frontend/ios/App/xcuserdata/
+frontend/ios/App/*.xcworkspace
 
-# General
-.DS_Store
+# Editor/IDE
 .vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Logs
+*.log
+log.txt
+
+# System Files
+.DS_Store
+Thumbs.db
+
+# Miscellaneous
+*.tmp
+*.swp

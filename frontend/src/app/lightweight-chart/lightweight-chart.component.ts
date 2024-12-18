@@ -20,12 +20,22 @@ export class LightweightChartComponent implements AfterViewInit {
   private chartInitialized = false;
 
   ngAfterViewInit() {
-    if (!this.chartInitialized) {
-      this.initializeChart();
-      this.setupResizeObserver();
-      this.chartInitialized = true;
-    }
+    requestAnimationFrame(() => {
+      const containerWidth = this.chartContainer.nativeElement.clientWidth;
+      const containerHeight = this.chartContainer.nativeElement.clientHeight;
+
+      if (containerWidth > 0 && containerHeight > 0) {
+        console.log('Chart container dimensions are valid. Initializing chart...');
+        this.initializeChart();
+        this.setupResizeObserver();
+        this.chartInitialized = true;
+      } else {
+        console.warn('Chart container not ready. Retrying...');
+        setTimeout(() => this.ngAfterViewInit(), 50);
+      }
+    });
   }
+
 
 
   public cleanup() {

@@ -22,7 +22,7 @@ export class HomePage {
   constructor(private marketDataService: MarketDataService, private tradingSessionService: TradingSessionService) { }
 
 
-  ionViewWillEnter(): void {
+  ionViewDidEnter(): void {
     console.log('Page entered, reinitializing chart.');
     if (this.activeSession) {
       this.loadDayData(); // Re-fetch and reinitialize chart
