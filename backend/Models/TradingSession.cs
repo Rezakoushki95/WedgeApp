@@ -1,20 +1,24 @@
 namespace backend.Models;
 
+using System.ComponentModel.DataAnnotations;
+
 public class TradingSession
 {
-    public int Id { get; set; }
+    public int Id { get; set; } // Primary Key: Always required by default in EF Core.
 
-    // Foreign key for the user
+    [Required] // Ensure API validation
     public int UserId { get; set; }
-    public User? User { get; set; } // Navigation property to the user
+    public User? User { get; set; } // Nullable navigation property
 
-    // Session-specific data
-    public string Instrument { get; set; } = "S&P 500"; // Default instrument
-    public DateTime TradingDay { get; set; } // The trading day for the session
+    [Required] // Ensure instrument is always provided
+    public string Instrument { get; set; } = "S&P 500";
 
-    public int CurrentBarIndex { get; set; } = 0; // Tracks bar progress within the day
-    public bool HasOpenOrder { get; set; } = false; // Indicates if there’s an open order
-    public decimal? EntryPrice { get; set; } = null; // Entry price for the current open order
-    public decimal TotalProfitLoss { get; set; } = 0; // Total profit/loss in this session
-    public int TotalOrders { get; set; } = 0; // Total orders executed in this session
+    [Required] // Ensure trading day is always provided
+    public DateTime TradingDay { get; set; }
+
+    public int CurrentBarIndex { get; set; } = 0;
+    public bool HasOpenOrder { get; set; } = false;
+    public decimal? EntryPrice { get; set; } = null;
+    public decimal TotalProfitLoss { get; set; } = 0;
+    public int TotalOrders { get; set; } = 0;
 }

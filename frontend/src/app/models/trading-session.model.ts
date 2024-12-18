@@ -7,5 +7,4 @@ export interface TradingSession {
   entryPrice: number | null;
   totalProfitLoss: number;
   totalOrders: number;
-  openProfit: number; // New field for calculated open profit
 }
