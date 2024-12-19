@@ -99,18 +99,17 @@ export class HomePage {
     if (currentBarIndex === this.lightweightChart.getTotalBars()) {
       console.log('Reached the end of the trading day.');
 
+      if (this.activeSession.hasOpenOrder) {
+        console.error('You must close your open trade before completing the day.');
+        return;
+      }
+
       // Call completeDay to handle end-of-day logic
       this.tradingSessionService.completeDay(this.activeSession.id).subscribe({
-        next: () => {
-          console.log('Trading day completed. Fetching next day data.');
-
-          // Fetch the next day data and reset the chart
-          this.marketDataService.getBarsForSession(this.activeSession.id).subscribe({
-            next: (bars) => {
-              this.lightweightChart.setData(bars);
-            },
-            error: (err) => console.error('Error fetching next day data:', err),
-          });
+        next: (updatedSession) => {
+          this.activeSession = updatedSession; // Update the session with the new day
+          this.loadDayData(); // Automatically fetch and set the next day's bars
+          console.log('Trading day completed successfully.');
         },
         error: (err) => console.error('Error completing trading day:', err),
       });
@@ -128,7 +127,6 @@ export class HomePage {
       });
     }
   }
-
 
 
 

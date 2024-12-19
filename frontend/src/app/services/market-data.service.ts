@@ -7,14 +7,14 @@ import { BarData } from '../models/bar-data.model';
   providedIn: 'root'
 })
 export class MarketDataService {
-  private apiUrl = 'http://localhost:5068/api/TradingSession';
+  private apiUrl = 'http://192.168.1.11:5068/api/TradingSession';
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) { }
 
   // Fetch bars for the current trading session
   getBarsForSession(sessionId: number) {
-    const url = `http://localhost:5068/api/TradingSession/get-bars?sessionId=${sessionId}`;
+    const url = `http://192.168.1.11:5068/api/TradingSession/get-bars?sessionId=${sessionId}`;
     return this.http.get<BarData[]>(url);
   }
-  
+
 }

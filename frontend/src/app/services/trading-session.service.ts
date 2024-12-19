@@ -10,7 +10,7 @@ import { TradingSession } from '../models/trading-session.model';
 })
 export class TradingSessionService {
 
-  private apiUrl = 'http://localhost:5068/api/TradingSession';
+  private apiUrl = 'http://192.168.1.11:5068/api/TradingSession';
 
   constructor(private http: HttpClient) { }
 
