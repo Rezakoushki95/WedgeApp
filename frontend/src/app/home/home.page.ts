@@ -2,6 +2,7 @@ import { Component, OnInit, ViewChild } from '@angular/core';
 import { LightweightChartComponent } from '../lightweight-chart/lightweight-chart.component';
 import { MarketDataService } from '../services/market-data.service';
 import { TradingSessionService } from '../services/trading-session.service';
+import { TradingSession } from '../models/trading-session.model';
 
 @Component({
   selector: 'app-home',
@@ -16,7 +17,7 @@ export class HomePage {
   totalOrders = 0;
   hasOpenOrder = false;
   entryPrice: number | null = null;
-  activeSession: any;
+  session: TradingSession | null = null;
   isShortTrade: boolean = false;
 
   constructor(private marketDataService: MarketDataService, private tradingSessionService: TradingSessionService) { }
@@ -24,7 +25,7 @@ export class HomePage {
 
   ionViewDidEnter(): void {
     console.log('Page entered, reinitializing chart.');
-    if (this.activeSession) {
+    if (this.session) {
       this.loadDayData(); // Re-fetch and reinitialize chart
     } else {
       this.fetchActiveSession();
@@ -41,7 +42,7 @@ export class HomePage {
     this.tradingSessionService.getSession(2, encodedInstrument).subscribe({
       next: (session) => {
         if (session) {
-          this.activeSession = session;
+          this.session = session;
           console.log('Active session:', session);
           this.loadDayData();
         } else {
@@ -55,16 +56,16 @@ export class HomePage {
   }
 
   private loadDayData() {
-    if (!this.activeSession) {
+    if (!this.session) {
       console.error('No active session found. Cannot load day data.');
       return;
     }
 
-    this.marketDataService.getBarsForSession(this.activeSession.id).subscribe({
+    this.marketDataService.getBarsForSession(this.session.sessionId).subscribe({
       next: (bars) => {
         if (this.lightweightChart) {
-          console.log('Passing bars and current bar index to chart:', bars, this.activeSession.currentBarIndex);
-          this.lightweightChart.setData(bars, this.activeSession.currentBarIndex); // Pass bars and index
+          console.log('Passing bars and current bar index to chart:', bars, this.session?.currentBarIndex);
+          this.lightweightChart.setData(bars, this.session?.currentBarIndex); // Pass bars and index
         } else {
           console.error('LightweightChartComponent is not initialized.');
         }
@@ -86,7 +87,7 @@ export class HomePage {
   }
 
   onNextBar() {
-    if (!this.lightweightChart || !this.activeSession) {
+    if (!this.lightweightChart || !this.session) {
       console.error('Chart or session is not initialized.');
       return;
     }
@@ -99,17 +100,25 @@ export class HomePage {
     if (currentBarIndex === this.lightweightChart.getTotalBars()) {
       console.log('Reached the end of the trading day.');
 
-      if (this.activeSession.hasOpenOrder) {
+      if (this.session.hasOpenOrder) {
         console.error('You must close your open trade before completing the day.');
         return;
       }
 
+      console.log('Calling completeDay with session:', this.session);
+
+
       // Call completeDay to handle end-of-day logic
-      this.tradingSessionService.completeDay(this.activeSession.id).subscribe({
-        next: (updatedSession) => {
-          this.activeSession = updatedSession; // Update the session with the new day
-          this.loadDayData(); // Automatically fetch and set the next day's bars
-          console.log('Trading day completed successfully.');
+      this.tradingSessionService.completeDay(this.session.sessionId).subscribe({
+        next: () => {
+          console.log('Day completed. Fetching updated session...');
+          // Refetch the session after completing the day
+          const encodedInstrument = encodeURIComponent('S&P 500');
+          this.tradingSessionService.getSession(2, encodedInstrument).subscribe((updatedSession) => {
+            this.session = updatedSession; // Update the session with the new day
+            this.loadDayData(); // Automatically fetch and set the next day's bars
+            console.log('Trading day completed successfully.');
+          });
         },
         error: (err) => console.error('Error completing trading day:', err),
       });
@@ -119,7 +128,7 @@ export class HomePage {
 
     // Checkpoint logic: Update the backend every 5 bars
     if (currentBarIndex % 5 === 0) {
-      this.tradingSessionService.updateSession(this.activeSession.id, {
+      this.tradingSessionService.updateSession(this.session.sessionId, {
         currentBarIndex: currentBarIndex,
       }).subscribe({
         next: () => console.log(`Session updated at bar ${currentBarIndex}.`),
@@ -132,7 +141,7 @@ export class HomePage {
 
 
   goLong(currentPrice: number) {
-    if (!this.hasOpenOrder && this.activeSession) {
+    if (!this.hasOpenOrder && this.session) {
       this.hasOpenOrder = true;
       this.entryPrice = currentPrice;
       this.isShortTrade = false; // This is a long trade
@@ -151,7 +160,7 @@ export class HomePage {
 
 
   goShort(currentPrice: number) {
-    if (!this.hasOpenOrder && this.activeSession) {
+    if (!this.hasOpenOrder && this.session) {
       this.hasOpenOrder = true;
       this.entryPrice = currentPrice;
       this.isShortTrade = true; // This is a short trade
@@ -171,7 +180,7 @@ export class HomePage {
 
 
   closeTrade(exitPrice: number) {
-    if (this.hasOpenOrder && this.activeSession) {
+    if (this.hasOpenOrder && this.session) {
       let tradeProfitLoss = 0;
       if (this.isShortTrade) {
         tradeProfitLoss = (this.entryPrice ?? 0) - exitPrice; // Profit for short trade
@@ -215,16 +224,24 @@ export class HomePage {
 
   private updateTradingSession(data: {
     currentBarIndex?: number;
-    currentProfitLoss?: number;
     totalProfitLoss?: number;
     totalOrders?: number;
     hasOpenOrder?: boolean;
     entryPrice?: number | null;
   }, successMessage: string, errorMessage: string): void {
-    if (this.activeSession?.id) {
-      this.tradingSessionService.updateSession(this.activeSession.id, data).subscribe({
+    if (this.session?.sessionId) {
+      const updatePayload = {
+        sessionId: this.session.sessionId,
+        instrument: this.session.instrument,
+        tradingDay: this.session.tradingDay,
+        ...data,
+      };
+
+      console.log('Sending update payload:', updatePayload);
+
+      this.tradingSessionService.updateSession(this.session.sessionId, updatePayload).subscribe({
         next: (updatedSession) => {
-          this.activeSession = updatedSession; // Sync the updated session
+          this.session = updatedSession; // Sync the updated session
           console.log(successMessage, updatedSession);
         },
         error: (err) => {
@@ -233,6 +250,7 @@ export class HomePage {
       });
     }
   }
+
 
 }
 
