@@ -1,5 +1,8 @@
+using System.Text.Json.Serialization;
+
 public class TradingSessionResponseDto
 {
+    [JsonPropertyName("sessionId")]
     public int SessionId { get; set; } // Primary key, always required
     public required string Instrument { get; set; } // Now required in model
     public required DateTime TradingDay { get; set; } // Now required in model
