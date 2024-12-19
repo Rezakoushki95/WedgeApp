@@ -26,13 +26,27 @@ namespace backend.Controllers
                     return NotFound(new { message = $"No trading session found for user {userId} and instrument {instrument}." });
                 }
 
-                return Ok(session);
+                // Map the model to the response DTO
+                var response = new TradingSessionResponseDto
+                {
+                    SessionId = session.Id, // Map Id to SessionId
+                    Instrument = session.Instrument,
+                    TradingDay = session.TradingDay,
+                    CurrentBarIndex = session.CurrentBarIndex,
+                    HasOpenOrder = session.HasOpenOrder,
+                    EntryPrice = session.EntryPrice,
+                    TotalProfitLoss = session.TotalProfitLoss,
+                    TotalOrders = session.TotalOrders
+                };
+
+                return Ok(response); // Return the DTO
             }
             catch (Exception ex)
             {
                 return BadRequest(new { message = ex.Message });
             }
         }
+
 
 
         [HttpPost("create-session")]
@@ -84,6 +98,8 @@ namespace backend.Controllers
                 return BadRequest(new { message = ex.Message });
             }
         }
+
+
         [HttpGet("get-bars")]
         public async Task<IActionResult> GetBars(int sessionId)
         {
