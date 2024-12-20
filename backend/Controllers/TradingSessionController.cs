@@ -68,15 +68,7 @@ namespace backend.Controllers
         {
             try
             {
-                var updatedSession = await _tradingSessionService.UpdateSession(
-                    updateDto.SessionId,
-                    updateDto.CurrentBarIndex,
-                    updateDto.HasOpenOrder,
-                    updateDto.EntryPrice,
-                    updateDto.TotalProfitLoss,
-                    updateDto.TotalOrders
-                );
-
+                var updatedSession = await _tradingSessionService.UpdateSession(updateDto);
                 return Ok(updatedSession); // Returns the response DTO
             }
             catch (Exception ex)
@@ -84,6 +76,7 @@ namespace backend.Controllers
                 return BadRequest(new { message = ex.Message });
             }
         }
+
 
         [HttpPost("complete-day")]
         public async Task<IActionResult> CompleteDay(int sessionId)

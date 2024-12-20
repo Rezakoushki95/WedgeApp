@@ -89,11 +89,9 @@ public class TradingSessionService
     }
 
     // Update the session state
-    public async Task<TradingSessionResponseDto> UpdateSession(
-     int sessionId, int? currentBarIndex = null, bool? hasOpenOrder = null,
-     decimal? entryPrice = null, decimal? totalProfitLoss = null, int? totalOrders = null)
+    public async Task<TradingSessionResponseDto> UpdateSession(UpdateSessionDto updateDto)
     {
-        var session = await _context.TradingSessions.FindAsync(sessionId);
+        var session = await _context.TradingSessions.FindAsync(updateDto.SessionId);
 
         if (session == null)
         {
@@ -101,19 +99,25 @@ public class TradingSessionService
         }
 
         // Validation
-        if (currentBarIndex.HasValue && currentBarIndex.Value < 0)
+        if (updateDto.CurrentBarIndex.HasValue && updateDto.CurrentBarIndex.Value < 0)
             throw new ArgumentException("CurrentBarIndex cannot be negative.");
-        if (totalOrders.HasValue && totalOrders.Value < 0)
+        if (updateDto.TotalOrders.HasValue && updateDto.TotalOrders.Value < 0)
             throw new ArgumentException("TotalOrders cannot be negative.");
-        if (entryPrice.HasValue && entryPrice.Value <= 0)
+        if (updateDto.EntryPrice.HasValue && updateDto.EntryPrice.Value <= 0)
             throw new ArgumentException("EntryPrice must be greater than zero.");
 
-        // Apply updates
-        if (currentBarIndex.HasValue) session.CurrentBarIndex = currentBarIndex.Value;
-        if (hasOpenOrder.HasValue) session.HasOpenOrder = hasOpenOrder.Value;
-        if (entryPrice.HasValue) session.EntryPrice = entryPrice.Value;
-        if (totalProfitLoss.HasValue) session.TotalProfitLoss = totalProfitLoss.Value;
-        if (totalOrders.HasValue) session.TotalOrders = totalOrders.Value;
+
+
+        session.CurrentBarIndex = updateDto.CurrentBarIndex.HasValue ? updateDto.CurrentBarIndex.Value : session.CurrentBarIndex;
+
+        session.HasOpenOrder = updateDto.HasOpenOrder.HasValue ? updateDto.HasOpenOrder.Value : session.HasOpenOrder;
+
+        session.EntryPrice = updateDto.EntryPrice.HasValue ? updateDto.EntryPrice.Value : null;
+
+        session.TotalProfitLoss = updateDto.TotalProfitLoss.HasValue ? updateDto.TotalProfitLoss.Value : session.TotalProfitLoss;
+
+        session.TotalOrders = updateDto.TotalOrders.HasValue ? updateDto.TotalOrders.Value : session.TotalOrders;
+
 
         await _context.SaveChangesAsync();
 
