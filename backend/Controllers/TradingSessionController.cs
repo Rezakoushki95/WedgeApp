@@ -16,35 +16,57 @@ namespace backend.Controllers
         }
 
         [HttpGet("get-session")]
-        public async Task<IActionResult> GetSession(int userId, string instrument)
+        public async Task<IActionResult> GetSession([FromQuery] int userId, [FromQuery] string instrument = "S&P 500")
         {
+            // Validate inputs
+            if (userId <= 0)
+            {
+                return BadRequest(new { message = "Invalid UserId. UserId must be greater than 0." });
+            }
+
+            if (string.IsNullOrWhiteSpace(instrument))
+            {
+                return BadRequest(new { message = "Instrument cannot be empty." });
+            }
+
             try
             {
+                // Fetch the session
                 var session = await _tradingSessionService.GetSession(userId, instrument);
                 if (session == null)
                 {
-                    return NotFound(new { message = $"No trading session found for user {userId} and instrument {instrument}." });
+                    return NotFound(new { message = $"No trading session found for user {userId} and instrument '{instrument}'." });
                 }
 
-                // Map the model to the response DTO
-                var response = new TradingSessionResponseDTO
-                {
-                    SessionId = session.Id, // Map Id to SessionId
-                    Instrument = session.Instrument,
-                    TradingDay = session.TradingDay,
-                    CurrentBarIndex = session.CurrentBarIndex,
-                    HasOpenOrder = session.HasOpenOrder,
-                    EntryPrice = session.EntryPrice,
-                    TotalProfitLoss = session.TotalProfitLoss,
-                    TotalOrders = session.TotalOrders
-                };
+                // Map to DTO
+                var response = MapToDto(session);
 
                 return Ok(response); // Return the DTO
             }
             catch (Exception ex)
             {
-                return BadRequest(new { message = ex.Message });
+                return Problem(
+                    detail: ex.Message,
+                    title: "An error occurred while fetching the session.",
+                    statusCode: 500
+                );
             }
+        }
+
+        // Helper method for mapping
+        private static TradingSessionResponseDTO MapToDto(TradingSession session)
+        {
+            return new TradingSessionResponseDTO
+            {
+                SessionId = session.Id,
+                Instrument = session.Instrument,
+                TradingDay = session.TradingDay,
+                CurrentBarIndex = session.CurrentBarIndex,
+                HasOpenOrder = session.HasOpenOrder,
+                EntryPrice = session.EntryPrice,
+                TotalProfitLoss = session.TotalProfitLoss,
+                TotalOrders = session.TotalOrders
+            };
         }
 
 
