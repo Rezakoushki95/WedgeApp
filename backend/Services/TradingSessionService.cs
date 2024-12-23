@@ -89,7 +89,7 @@ public class TradingSessionService
     }
 
     // Update the session state
-    public async Task<TradingSessionResponseDto> UpdateSession(UpdateSessionDto updateDto)
+    public async Task<TradingSessionResponseDTO> UpdateSession(UpdateSessionDTO updateDto)
     {
         var session = await _context.TradingSessions.FindAsync(updateDto.SessionId);
 
@@ -122,7 +122,7 @@ public class TradingSessionService
         await _context.SaveChangesAsync();
 
         // Map the updated session to the response DTO
-        return new TradingSessionResponseDto
+        return new TradingSessionResponseDTO
         {
             SessionId = session.Id,
             Instrument = session.Instrument,

@@ -27,7 +27,7 @@ namespace backend.Controllers
                 }
 
                 // Map the model to the response DTO
-                var response = new TradingSessionResponseDto
+                var response = new TradingSessionResponseDTO
                 {
                     SessionId = session.Id, // Map Id to SessionId
                     Instrument = session.Instrument,
@@ -50,12 +50,30 @@ namespace backend.Controllers
 
 
         [HttpPost("create-session")]
-        public async Task<IActionResult> CreateSession(int userId)
+        public async Task<IActionResult> CreateSession([FromBody] CreateSessionDTO createDto)
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
             try
             {
-                var session = await _tradingSessionService.CreateSession(userId);
-                return Ok(new { message = "New trading session started successfully.", session });
+                var session = await _tradingSessionService.CreateSession(createDto.UserId);
+
+                var response = new TradingSessionResponseDTO
+                {
+                    SessionId = session.Id,
+                    Instrument = session.Instrument,
+                    TradingDay = session.TradingDay,
+                    CurrentBarIndex = session.CurrentBarIndex,
+                    HasOpenOrder = session.HasOpenOrder,
+                    EntryPrice = session.EntryPrice,
+                    TotalProfitLoss = session.TotalProfitLoss,
+                    TotalOrders = session.TotalOrders
+                };
+
+                return Ok(response);
             }
             catch (Exception ex)
             {
@@ -63,8 +81,9 @@ namespace backend.Controllers
             }
         }
 
+
         [HttpPut("update-session")]
-        public async Task<IActionResult> UpdateSession([FromBody] UpdateSessionDto updateDto)
+        public async Task<IActionResult> UpdateSession([FromBody] UpdateSessionDTO updateDto)
         {
             try
             {

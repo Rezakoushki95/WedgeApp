@@ -1,6 +1,7 @@
+
 using System.Text.Json.Serialization;
 
-public class TradingSessionResponseDto
+public class TradingSessionResponseDTO
 {
     [JsonPropertyName("sessionId")]
     public int SessionId { get; set; } // Primary key, always required

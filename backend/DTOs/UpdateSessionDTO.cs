@@ -1,4 +1,4 @@
-public class UpdateSessionDto
+public class UpdateSessionDTO
 {
     public int SessionId { get; set; }
     public int? CurrentBarIndex { get; set; }
