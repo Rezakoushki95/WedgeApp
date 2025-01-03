@@ -95,33 +95,33 @@ public class TradingSessionService
 
         if (session == null)
         {
-            throw new Exception("Session not found.");
+            throw new KeyNotFoundException($"No session found with SessionId: {updateDto.SessionId}");
         }
 
         // Validation
         if (updateDto.CurrentBarIndex.HasValue && updateDto.CurrentBarIndex.Value < 0)
+        {
             throw new ArgumentException("CurrentBarIndex cannot be negative.");
+        }
         if (updateDto.TotalOrders.HasValue && updateDto.TotalOrders.Value < 0)
+        {
             throw new ArgumentException("TotalOrders cannot be negative.");
+        }
         if (updateDto.EntryPrice.HasValue && updateDto.EntryPrice.Value <= 0)
+        {
             throw new ArgumentException("EntryPrice must be greater than zero.");
+        }
 
-
-
-        session.CurrentBarIndex = updateDto.CurrentBarIndex.HasValue ? updateDto.CurrentBarIndex.Value : session.CurrentBarIndex;
-
-        session.HasOpenOrder = updateDto.HasOpenOrder.HasValue ? updateDto.HasOpenOrder.Value : session.HasOpenOrder;
-
-        session.EntryPrice = updateDto.EntryPrice.HasValue ? updateDto.EntryPrice.Value : null;
-
-        session.TotalProfitLoss = updateDto.TotalProfitLoss.HasValue ? updateDto.TotalProfitLoss.Value : session.TotalProfitLoss;
-
-        session.TotalOrders = updateDto.TotalOrders.HasValue ? updateDto.TotalOrders.Value : session.TotalOrders;
-
+        // Apply updates
+        session.CurrentBarIndex = updateDto.CurrentBarIndex ?? session.CurrentBarIndex;
+        session.HasOpenOrder = updateDto.HasOpenOrder ?? session.HasOpenOrder;
+        session.EntryPrice = updateDto.EntryPrice ?? session.EntryPrice;
+        session.TotalProfitLoss = updateDto.TotalProfitLoss ?? session.TotalProfitLoss;
+        session.TotalOrders = updateDto.TotalOrders ?? session.TotalOrders;
 
         await _context.SaveChangesAsync();
 
-        // Map the updated session to the response DTO
+        // Map to DTO
         return new TradingSessionResponseDTO
         {
             SessionId = session.Id,
@@ -131,32 +131,10 @@ public class TradingSessionService
             HasOpenOrder = session.HasOpenOrder,
             EntryPrice = session.EntryPrice,
             TotalProfitLoss = session.TotalProfitLoss,
-            TotalOrders = session.TotalOrders,
+            TotalOrders = session.TotalOrders
         };
-
     }
 
-    // Example of a helper method for computed fields
-    private async Task<decimal> CalculateOpenProfit(TradingSession session)
-    {
-        // Validate session state
-        if (!session.HasOpenOrder || session.EntryPrice == null)
-            return 0;
-
-        // Retrieve the current bar
-        var currentBar = await _context.FiveMinuteBars
-            .Where(bar => bar.MarketDataDay.Date == session.TradingDay)
-            .OrderBy(bar => bar.Timestamp)
-            .Skip(session.CurrentBarIndex) // Skip to the current bar index
-            .FirstOrDefaultAsync();
-
-        if (currentBar == null)
-            throw new Exception("Current bar not found for the given trading day and index.");
-
-        // Calculate profit based on the current price
-        var currentPrice = currentBar.Close; // Use the closing price of the current bar
-        return (currentPrice - session.EntryPrice.Value) * (session.HasOpenOrder ? 1 : -1);
-    }
 
 
     public async Task CompleteDay(int sessionId)

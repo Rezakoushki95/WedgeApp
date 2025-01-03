@@ -107,16 +107,30 @@ namespace backend.Controllers
         [HttpPut("update-session")]
         public async Task<IActionResult> UpdateSession([FromBody] UpdateSessionDTO updateDto)
         {
+            // Validate the input early
+            if (updateDto.SessionId <= 0)
+            {
+                return BadRequest(new { message = "SessionId must be greater than 0." });
+            }
+
             try
             {
                 var updatedSession = await _tradingSessionService.UpdateSession(updateDto);
                 return Ok(updatedSession); // Returns the response DTO
             }
+            catch (KeyNotFoundException ex)
+            {
+                // Handle case where session is not found
+                return NotFound(new { message = ex.Message });
+            }
             catch (Exception ex)
             {
-                return BadRequest(new { message = ex.Message });
+                // Log unexpected errors (optional)
+                Console.WriteLine($"Error: {ex.Message}");
+                return Problem("An unexpected error occurred while updating the session.");
             }
         }
+
 
 
         [HttpPost("complete-day")]
