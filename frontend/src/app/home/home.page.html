@@ -47,9 +47,13 @@
         </div>
       </ion-col>
       <ion-col size="5">
-        <ion-button expand="block" class="next-bar-button" (click)="onNextBar()"
-          >Next Bar</ion-button
+        <ion-button
+          expand="block"
+          [color]="isLastBar() ? 'success' : 'primary'"
+          (click)="isLastBar() ? onCompleteDay() : onNextBar()"
         >
+          {{ isLastBar() ? 'Complete Day' : 'Next Bar' }}
+        </ion-button>
       </ion-col>
     </ion-row>
 
