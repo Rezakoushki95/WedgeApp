@@ -88,7 +88,7 @@ public class TradingSessionService
         return newSession;
     }
 
-    // Update the session state
+    // Update the session state// Update the session state
     public async Task<TradingSessionResponseDTO> UpdateSession(UpdateSessionDTO updateDto)
     {
         var session = await _context.TradingSessions.FindAsync(updateDto.SessionId);
@@ -112,10 +112,10 @@ public class TradingSessionService
             throw new ArgumentException("EntryPrice must be greater than zero.");
         }
 
-        // Apply updates
+        // Apply updates with explicit null handling for EntryPrice
         session.CurrentBarIndex = updateDto.CurrentBarIndex ?? session.CurrentBarIndex;
         session.HasOpenOrder = updateDto.HasOpenOrder ?? session.HasOpenOrder;
-        session.EntryPrice = updateDto.EntryPrice ?? session.EntryPrice;
+        session.EntryPrice = updateDto.EntryPrice.HasValue ? updateDto.EntryPrice : null; // Explicitly set null
         session.TotalProfitLoss = updateDto.TotalProfitLoss ?? session.TotalProfitLoss;
         session.TotalOrders = updateDto.TotalOrders ?? session.TotalOrders;
 
@@ -134,6 +134,7 @@ public class TradingSessionService
             TotalOrders = session.TotalOrders
         };
     }
+
 
 
 
