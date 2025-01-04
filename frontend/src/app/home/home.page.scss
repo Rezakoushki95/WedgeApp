@@ -50,13 +50,14 @@ ion-content::part(scroll) {
 .order-info-col {
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: left;
   justify-content: center;
   font-size: 1.1rem;
 }
 
 .order-info-label {
   width: 150px;
+  margin-left: 10px;
 }
 
 .footer-grid {
