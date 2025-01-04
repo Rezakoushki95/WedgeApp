@@ -138,7 +138,7 @@ export class HomePage {
   goLong(currentPrice: number) {
     if (!this.session?.hasOpenOrder && this.session) {
       this.session.hasOpenOrder = true;
-      this.session.entryPrice = currentPrice;
+      this.session.entryPrice = Math.round(currentPrice * 100) / 100; // Round to 2 decimals
       this.isShortTrade = false;
 
       this.updateTradingSession(
@@ -153,11 +153,10 @@ export class HomePage {
     }
   }
 
-
   goShort(currentPrice: number) {
     if (!this.session?.hasOpenOrder && this.session) {
       this.session.hasOpenOrder = true;
-      this.session.entryPrice = currentPrice;
+      this.session.entryPrice = Math.round(currentPrice * 100) / 100; // Round to 2 decimals
       this.isShortTrade = true;
 
       this.updateTradingSession(
@@ -173,42 +172,46 @@ export class HomePage {
   }
 
 
-
   closeTrade(exitPrice: number) {
     if (this.session?.hasOpenOrder && this.session) {
       let tradeProfitLoss = 0;
       if (this.isShortTrade) {
-        tradeProfitLoss = (this.session.entryPrice ?? 0) - exitPrice;
+        tradeProfitLoss = (this.session.entryPrice ?? 0) - exitPrice; // Calculate profit for short trade
       } else {
-        tradeProfitLoss = exitPrice - (this.session.entryPrice ?? 0);
+        tradeProfitLoss = exitPrice - (this.session.entryPrice ?? 0); // Calculate profit for long trade
       }
 
-      this.session.totalProfitLoss += tradeProfitLoss;
+      // Update cumulative session metrics
+      this.session.totalProfitLoss = Math.round((this.session.totalProfitLoss + tradeProfitLoss) * 100) / 100; // Round to 2 decimals
       this.session.totalOrders += 1;
-      this.session.hasOpenOrder = false;
-      this.session.entryPrice = null;
 
+      // Update open trade-related properties
+      this.session.hasOpenOrder = false;
+      this.session.entryPrice = null; // Explicitly set to null to reflect trade closure
+
+      // Persist the updated session to the backend
       this.updateTradingSession({
         currentBarIndex: this.lightweightChart.getCurrentBarIndex(),
         totalProfitLoss: this.session.totalProfitLoss,
         totalOrders: this.session.totalOrders,
         hasOpenOrder: this.session.hasOpenOrder,
-        entryPrice: this.session.entryPrice,
+        entryPrice: this.session.entryPrice, // Ensure null is sent to backend
       }, `Trade closed successfully. Profit/Loss: ${tradeProfitLoss.toFixed(2)}`, 'Error closing trade.');
     }
-
   }
+
+
 
 
   calculateOpenProfit(currentPrice: number): number {
     if (this.session?.hasOpenOrder && this.session.entryPrice !== null) {
-      if (this.isShortTrade) {
-        return (this.session.entryPrice ?? 0) - currentPrice; // Short trade calculation
-      } else {
-        return currentPrice - (this.session.entryPrice ?? 0); // Long trade calculation
-      }
+      let profit = this.isShortTrade
+        ? (this.session.entryPrice ?? 0) - currentPrice
+        : currentPrice - (this.session.entryPrice ?? 0);
+
+      return Math.round(profit * 100) / 100; // Round to 2 decimals
     }
-    return 0; // Default to 0 if no open order or entry price is null
+    return 0;
   }
 
 
@@ -232,7 +235,10 @@ export class HomePage {
 
       this.tradingSessionService.updateSession(this.session.sessionId, updatePayload).subscribe({
         next: (updatedSession) => {
-          this.session = updatedSession; // Sync the updated session
+          this.session = {
+            ...updatedSession,
+            totalProfitLoss: Math.round((updatedSession.totalProfitLoss ?? 0) * 100) / 100 // Ensure it's rounded
+          };
           console.log(successMessage, updatedSession);
         },
         error: (err) => {
@@ -241,6 +247,7 @@ export class HomePage {
       });
     }
   }
+
 
 
 }
