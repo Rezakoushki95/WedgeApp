@@ -87,39 +87,14 @@ export class HomePage {
       return;
     }
 
-    this.lightweightChart.showNextBar();
+    if (this.isLastBar()) {
+      console.log('Last bar already reached. Wait for "Complete Day" action.');
+      return; // Stop here if the last bar is already reached
+    }
+
+    this.lightweightChart.showNextBar(); // Move to the next bar
 
     const currentBarIndex = this.lightweightChart.getCurrentBarIndex();
-
-    // Check if we've reached the last bar for the day
-    if (currentBarIndex === this.lightweightChart.getTotalBars()) {
-      console.log('Reached the end of the trading day.');
-
-      if (this.session.hasOpenOrder) {
-        console.error('You must close your open trade before completing the day.');
-        return;
-      }
-
-      console.log('Calling completeDay with session:', this.session);
-
-
-      // Call completeDay to handle end-of-day logic
-      this.tradingSessionService.completeDay(this.session.sessionId).subscribe({
-        next: () => {
-          console.log('Day completed. Fetching updated session...');
-          // Refetch the session after completing the day
-          const encodedInstrument = encodeURIComponent('S&P 500');
-          this.tradingSessionService.getSession(2, encodedInstrument).subscribe((updatedSession) => {
-            this.session = updatedSession; // Update the session with the new day
-            this.loadDayData(); // Automatically fetch and set the next day's bars
-            console.log('Trading day completed successfully.');
-          });
-        },
-        error: (err) => console.error('Error completing trading day:', err),
-      });
-
-      return; // End the method here as it's the last bar
-    }
 
     // Checkpoint logic: Update the backend every 5 bars
     if (currentBarIndex % 5 === 0) {
@@ -131,6 +106,36 @@ export class HomePage {
       });
     }
   }
+
+  onCompleteDay() {
+    if (!this.lightweightChart || !this.session) {
+      console.error('Chart or session is not initialized.');
+      return;
+    }
+
+    if (this.session.hasOpenOrder) {
+      console.error('You must close your open trade before completing the day.');
+      return;
+    }
+
+    console.log('Calling completeDay with session:', this.session);
+
+    // Call completeDay to handle end-of-day logic
+    this.tradingSessionService.completeDay(this.session.sessionId).subscribe({
+      next: () => {
+        console.log('Day completed. Fetching updated session...');
+        const encodedInstrument = encodeURIComponent('S&P 500');
+        this.tradingSessionService.getSession(2, encodedInstrument).subscribe((updatedSession) => {
+          this.session = updatedSession; // Update the session with the new day
+          this.loadDayData(); // Automatically fetch and set the next day's bars
+          console.log('Trading day completed successfully.');
+        });
+      },
+      error: (err) => console.error('Error completing trading day:', err),
+    });
+  }
+
+
 
 
 
@@ -247,6 +252,11 @@ export class HomePage {
       });
     }
   }
+
+  isLastBar(): boolean {
+    return this.lightweightChart?.getCurrentBarIndex() === this.lightweightChart?.getTotalBars() - 1;
+  }
+
 
 
 
