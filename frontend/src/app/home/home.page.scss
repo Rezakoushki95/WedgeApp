@@ -4,10 +4,10 @@
   --margin-size: 2%;
 }
 
-// remove scrolling
+
 ion-content::part(scroll) {
-  overflow-y: hidden; /* Removes vertical scroll */
-  overflow-x: hidden; /* Removes horizontal scroll if needed */
+  overflow-y: hidden; 
+  overflow-x: hidden; 
   display: flex;
   flex-direction: column;
   padding-top: 1% !important;
@@ -33,7 +33,7 @@ ion-content::part(scroll) {
   padding: 0;
   flex-grow: 1;
   margin: 0;
-  height: auto;
+  height: calc(100% - 150px); /* Adjust to account for the header and footer */
 
   ion-row {
     height: 100%;
@@ -56,9 +56,13 @@ ion-content::part(scroll) {
 }
 
 .order-info-label {
-  width: 150px;
-  margin-left: 10px;
+  width: auto; 
+  margin-left: 5px;
+  white-space: nowrap; 
+  overflow: hidden;
+  text-overflow: ellipsis; 
 }
+
 
 .footer-grid {
   padding-top: 0;
