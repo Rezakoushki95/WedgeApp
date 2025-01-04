@@ -12,11 +12,6 @@ import { TradingSession } from '../models/trading-session.model';
 export class HomePage {
   @ViewChild(LightweightChartComponent) lightweightChart!: LightweightChartComponent;
 
-  currentProfitLoss = 0;
-  totalProfitLoss = 0;
-  totalOrders = 0;
-  hasOpenOrder = false;
-  entryPrice: number | null = null;
   session: TradingSession | null = null;
   isShortTrade: boolean = false;
 
@@ -141,16 +136,16 @@ export class HomePage {
 
 
   goLong(currentPrice: number) {
-    if (!this.hasOpenOrder && this.session) {
-      this.hasOpenOrder = true;
-      this.entryPrice = currentPrice;
-      this.isShortTrade = false; // This is a long trade
+    if (!this.session?.hasOpenOrder && this.session) {
+      this.session.hasOpenOrder = true;
+      this.session.entryPrice = currentPrice;
+      this.isShortTrade = false;
 
       this.updateTradingSession(
         {
           currentBarIndex: this.lightweightChart.getCurrentBarIndex(),
-          hasOpenOrder: this.hasOpenOrder,
-          entryPrice: this.entryPrice,
+          hasOpenOrder: this.session.hasOpenOrder,
+          entryPrice: this.session.entryPrice,
         },
         'Trade opened successfully.',
         'Error opening trade.'
@@ -160,16 +155,16 @@ export class HomePage {
 
 
   goShort(currentPrice: number) {
-    if (!this.hasOpenOrder && this.session) {
-      this.hasOpenOrder = true;
-      this.entryPrice = currentPrice;
-      this.isShortTrade = true; // This is a short trade
+    if (!this.session?.hasOpenOrder && this.session) {
+      this.session.hasOpenOrder = true;
+      this.session.entryPrice = currentPrice;
+      this.isShortTrade = true;
 
       this.updateTradingSession(
         {
           currentBarIndex: this.lightweightChart.getCurrentBarIndex(),
-          hasOpenOrder: this.hasOpenOrder,
-          entryPrice: this.entryPrice,
+          hasOpenOrder: this.session.hasOpenOrder,
+          entryPrice: this.session.entryPrice,
         },
         'Short position opened successfully.',
         'Error opening short position.'
@@ -180,46 +175,42 @@ export class HomePage {
 
 
   closeTrade(exitPrice: number) {
-    if (this.hasOpenOrder && this.session) {
+    if (this.session?.hasOpenOrder && this.session) {
       let tradeProfitLoss = 0;
       if (this.isShortTrade) {
-        tradeProfitLoss = (this.entryPrice ?? 0) - exitPrice; // Profit for short trade
+        tradeProfitLoss = (this.session.entryPrice ?? 0) - exitPrice;
       } else {
-        tradeProfitLoss = exitPrice - (this.entryPrice ?? 0); // Profit for long trade
+        tradeProfitLoss = exitPrice - (this.session.entryPrice ?? 0);
       }
 
-      this.totalProfitLoss += tradeProfitLoss;
-      this.totalOrders += 1;
-      this.hasOpenOrder = false;
-      this.entryPrice = null;
+      this.session.totalProfitLoss += tradeProfitLoss;
+      this.session.totalOrders += 1;
+      this.session.hasOpenOrder = false;
+      this.session.entryPrice = null;
 
-      this.updateTradingSession(
-        {
-          currentBarIndex: this.lightweightChart.getCurrentBarIndex(),
-          totalProfitLoss: this.totalProfitLoss,
-          totalOrders: this.totalOrders,
-          hasOpenOrder: this.hasOpenOrder,
-          entryPrice: this.entryPrice,
-        },
-        `Trade closed successfully. Profit/Loss: ${tradeProfitLoss.toFixed(2)}`,
-        'Error closing trade.'
-      );
+      this.updateTradingSession({
+        currentBarIndex: this.lightweightChart.getCurrentBarIndex(),
+        totalProfitLoss: this.session.totalProfitLoss,
+        totalOrders: this.session.totalOrders,
+        hasOpenOrder: this.session.hasOpenOrder,
+        entryPrice: this.session.entryPrice,
+      }, `Trade closed successfully. Profit/Loss: ${tradeProfitLoss.toFixed(2)}`, 'Error closing trade.');
     }
+
   }
 
 
   calculateOpenProfit(currentPrice: number): number {
-    if (this.hasOpenOrder && this.entryPrice !== null) {
+    if (this.session?.hasOpenOrder && this.session.entryPrice !== null) {
       if (this.isShortTrade) {
-
-        return (this.entryPrice ?? 0) - currentPrice;
+        return (this.session.entryPrice ?? 0) - currentPrice; // Short trade calculation
       } else {
-
-        return currentPrice - (this.entryPrice ?? 0);
+        return currentPrice - (this.session.entryPrice ?? 0); // Long trade calculation
       }
     }
-    return 0;
+    return 0; // Default to 0 if no open order or entry price is null
   }
+
 
 
   private updateTradingSession(data: {
