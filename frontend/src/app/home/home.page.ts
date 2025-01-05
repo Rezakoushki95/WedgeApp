@@ -14,6 +14,8 @@ export class HomePage {
 
   session: TradingSession | null = null;
   isShortTrade: boolean = false;
+  tradeEntryBarIndex: number | null = null; // Track the bar index where the trade started
+
 
   constructor(private marketDataService: MarketDataService, private tradingSessionService: TradingSessionService) { }
 
@@ -145,6 +147,8 @@ export class HomePage {
       this.session.hasOpenOrder = true;
       this.session.entryPrice = Math.round(currentPrice * 100) / 100; // Round to 2 decimals
       this.isShortTrade = false;
+      this.tradeEntryBarIndex = this.lightweightChart.getCurrentBarIndex(); // Set the entry bar index
+
 
       this.updateTradingSession(
         {
@@ -163,6 +167,8 @@ export class HomePage {
       this.session.hasOpenOrder = true;
       this.session.entryPrice = Math.round(currentPrice * 100) / 100; // Round to 2 decimals
       this.isShortTrade = true;
+      this.tradeEntryBarIndex = this.lightweightChart.getCurrentBarIndex(); // Set the entry bar index
+
 
       this.updateTradingSession(
         {
@@ -186,13 +192,21 @@ export class HomePage {
         tradeProfitLoss = exitPrice - (this.session.entryPrice ?? 0); // Calculate profit for long trade
       }
 
+      // Check if the trade entry and exit happened on the same bar
+      const currentBarIndex = this.lightweightChart.getCurrentBarIndex();
+      if (this.tradeEntryBarIndex !== currentBarIndex) {
+        console.log(currentBarIndex, this.tradeEntryBarIndex);
+        this.session.totalOrders += 1; // Only increment if different bars
+      }
+
       // Update cumulative session metrics
       this.session.totalProfitLoss = Math.round((this.session.totalProfitLoss + tradeProfitLoss) * 100) / 100; // Round to 2 decimals
-      this.session.totalOrders += 1;
 
-      // Update open trade-related properties
+      // Reset trade-related properties
       this.session.hasOpenOrder = false;
       this.session.entryPrice = null; // Explicitly set to null to reflect trade closure
+      this.tradeEntryBarIndex = null; // Reset entry bar index
+
 
       // Persist the updated session to the backend
       this.updateTradingSession({
