@@ -49,42 +49,53 @@
       <ion-col size="5">
         <ion-button
           expand="block"
-          [color]="isLastBar() ? 'success' : 'primary'"
-          (click)="isLastBar() ? onCompleteDay() : onNextBar()"
+          [color]="isLastBar ? 'success' : 'primary'"
+          (click)="isLastBar ? onCompleteDay() : onNextBar()"
         >
-          {{ isLastBar() ? 'Complete Day' : 'Next Bar' }}
+          {{ isLastBar ? 'New Day' : 'Next Bar' }}
         </ion-button>
       </ion-col>
     </ion-row>
 
     <!-- Action Buttons Section -->
     <ion-row>
+      <!-- Long Button -->
       <ion-col>
         <ion-button
           expand="block"
           color="success"
           class="action-button"
           *ngIf="lightweightChart"
+          [disabled]="isLongDisabled"
+          [class.active]="session?.hasOpenOrder && !isShortTrade"
           (click)="goLong(getCurrentBarPrice())"
         >
           Long
         </ion-button>
       </ion-col>
+
+      <!-- Short Button -->
       <ion-col>
         <ion-button
           expand="block"
           color="danger"
           class="action-button"
           *ngIf="lightweightChart"
+          [disabled]="isShortDisabled"
+          [class.active]="session?.hasOpenOrder && isShortTrade"
           (click)="goShort(getCurrentBarPrice())"
-          >Short</ion-button
         >
+          Short
+        </ion-button>
       </ion-col>
+
+      <!-- Exit Trade Button -->
       <ion-col size="5">
         <ion-button
           expand="block"
           class="exit-button"
           *ngIf="lightweightChart"
+          [disabled]="isExitTradeDisabled"
           (click)="closeTrade(getCurrentBarPrice())"
         >
           Exit Trade

@@ -67,3 +67,18 @@ ion-content::part(scroll) {
 .footer-grid {
   padding-top: 0;
 }
+
+
+
+.action-button:disabled {
+  opacity: 0.4; /* Lower opacity for disabled state */
+  pointer-events: none; /* Ensure disabled buttons are non-interactive */
+}
+
+ion-button::part(native) {
+  color: white !important;
+}
+
+
+
+

@@ -87,7 +87,7 @@ export class HomePage {
       return;
     }
 
-    if (this.isLastBar()) {
+    if (this.isLastBar) {
       console.log('Last bar already reached. Wait for "Complete Day" action.');
       return; // Stop here if the last bar is already reached
     }
@@ -205,9 +205,6 @@ export class HomePage {
     }
   }
 
-
-
-
   calculateOpenProfit(currentPrice: number): number {
     if (this.session?.hasOpenOrder && this.session.entryPrice !== null) {
       let profit = this.isShortTrade
@@ -253,10 +250,22 @@ export class HomePage {
     }
   }
 
-  isLastBar(): boolean {
+  // computed properties
+  get isLastBar(): boolean {
     return this.lightweightChart?.getCurrentBarIndex() === this.lightweightChart?.getTotalBars() - 1;
   }
 
+  get isLongDisabled(): boolean {
+    return this.session?.hasOpenOrder || this.isLastBar;
+  }
+
+  get isShortDisabled(): boolean {
+    return this.session?.hasOpenOrder || this.isLastBar;
+  }
+
+  get isExitTradeDisabled(): boolean {
+    return !this.session?.hasOpenOrder;
+  }
 
 
 
