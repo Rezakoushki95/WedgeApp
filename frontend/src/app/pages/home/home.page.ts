@@ -1,8 +1,8 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
-import { LightweightChartComponent } from '../lightweight-chart/lightweight-chart.component';
-import { MarketDataService } from '../services/market-data.service';
-import { TradingSessionService } from '../services/trading-session.service';
-import { TradingSession } from '../models/trading-session.model';
+import { LightweightChartComponent } from '../../components/lightweight-chart/lightweight-chart.component';
+import { MarketDataService } from '../../services/market-data.service';
+import { TradingSessionService } from '../../services/trading-session.service';
+import { TradingSession } from '../../models/trading-session.model';
 
 @Component({
   selector: 'app-home',

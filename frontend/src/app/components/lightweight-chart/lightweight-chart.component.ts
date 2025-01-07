@@ -1,6 +1,6 @@
 import { Component, AfterViewInit, OnDestroy, ElementRef, ViewChild } from '@angular/core';
 import { createChart, IChartApi, ISeriesApi, UTCTimestamp } from 'lightweight-charts';
-import { BarData } from '../models/bar-data.model';
+import { BarData } from '../../models/bar-data.model';
 
 @Component({
   selector: 'app-lightweight-chart',

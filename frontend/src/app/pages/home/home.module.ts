@@ -5,7 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { HomePage } from './home.page';
 
 import { HomePageRoutingModule } from './home-routing.module';
-import { LightweightChartComponent } from '../lightweight-chart/lightweight-chart.component';
+import { LightweightChartComponent } from '../../components/lightweight-chart/lightweight-chart.component';
 
 
 @NgModule({
@@ -17,4 +17,4 @@ import { LightweightChartComponent } from '../lightweight-chart/lightweight-char
   ],
   declarations: [HomePage, LightweightChartComponent]
 })
-export class HomePageModule {}
+export class HomePageModule { }
