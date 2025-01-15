@@ -28,10 +28,12 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 // Register services
 builder.Services.AddHttpClient<MarketDataService>(); // HttpClient for API calls
-builder.Services.AddScoped<MarketDataService>(); // Market data fetching and storage logic
-builder.Services.AddScoped<TradingSessionService>(); // Trading session logic
-builder.Services.AddScoped<UserStatsService>(); // User stats updating logic
-builder.Services.AddScoped<AccessManagementService>(); // Access management logic
+builder.Services.AddScoped<MarketDataService>();
+builder.Services.AddScoped<TradingSessionService>();
+builder.Services.AddScoped<UserStatsService>();
+builder.Services.AddScoped<AccessManagementService>();
+builder.Services.AddScoped<LeaderboardService>();
+
 
 var app = builder.Build();
 
