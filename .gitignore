@@ -41,3 +41,21 @@ Thumbs.db
 *.swp
 
 .fake
+
+*.db
+*.db-shm
+*.db-wal
+
+/frontend/www/
+
+/backend/Migrations/
+
+*.env
+
+
+.DS_Store
+.Spotlight-V100
+.Trashes
+
+
+/frontend/.env

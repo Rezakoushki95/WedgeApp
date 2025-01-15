@@ -1,13 +1,15 @@
-import type { CapacitorConfig } from '@capacitor/cli';
+const LIVERELOAD_URL = process.env["LIVERELOAD_URL"];
 
-const config: CapacitorConfig = {
-  appId: 'com.wedge.apple',
-  appName: 'Wedge',
+const config = {
+  appId: 'com.example.app',
+  appName: 'WedgeApp',
   webDir: 'www',
-  server: {
-    url: 'http://192.168.1.11:8100',
-    cleartext: true
-  }
+  server: process.env["LIVERELOAD"] === 'true' && LIVERELOAD_URL
+    ? {
+      url: LIVERELOAD_URL,
+      cleartext: true,
+    }
+    : undefined,
 };
 
 export default config;
