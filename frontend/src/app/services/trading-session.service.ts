@@ -14,14 +14,15 @@ export class TradingSessionService {
 
   constructor(private http: HttpClient) { }
 
+
   getSession(userId: number, instrument: string = 'S&P 500'): Observable<TradingSession> {
-    const url = `${this.apiUrl}/get-session?userId=${userId}&instrument=${instrument}`;
+    const encodedInstrument = encodeURIComponent(instrument);
+    const url = `${this.apiUrl}/get-session?userId=${userId}&instrument=${encodedInstrument}`;
     return this.http.get<TradingSession | null>(url).pipe(
       map((session) => this.handleResponse(session, 'Session not found')),
       catchError((error) => this.handleError(error))
     );
   }
-
 
   // Update the session with state and stats
   updateSession(sessionId: number, data: {

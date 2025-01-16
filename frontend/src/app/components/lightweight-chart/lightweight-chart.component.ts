@@ -18,23 +18,25 @@ export class LightweightChartComponent implements AfterViewInit {
   private currentBarIndex = 0;
   private dayData: BarData[] = []; // Stores the day's data
   private chartInitialized = false;
-
   ngAfterViewInit() {
-    requestAnimationFrame(() => {
-      const containerWidth = this.chartContainer.nativeElement.clientWidth;
-      const containerHeight = this.chartContainer.nativeElement.clientHeight;
-
-      if (containerWidth > 0 && containerHeight > 0) {
-        console.log('Chart container dimensions are valid. Initializing chart...');
-        this.initializeChart();
-        this.setupResizeObserver();
-        this.chartInitialized = true;
-      } else {
-        console.warn('Chart container not ready. Retrying...');
-        setTimeout(() => this.ngAfterViewInit(), 50);
-      }
-    });
+    const container = this.chartContainer.nativeElement;
+    if (container.offsetWidth > 0 && container.offsetHeight > 0) {
+      console.log('Chart container dimensions are valid. Initializing chart...');
+      this.initializeChart();
+      this.setupResizeObserver();
+      this.chartInitialized = true;
+    } else {
+      console.warn('Chart container not ready. Retrying...');
+      this.resizeObserver = new ResizeObserver(() => {
+        if (container.offsetWidth > 0 && container.offsetHeight > 0) {
+          this.resizeObserver.disconnect();
+          this.ngAfterViewInit();
+        }
+      });
+      this.resizeObserver.observe(container);
+    }
   }
+
 
 
 
@@ -96,7 +98,7 @@ export class LightweightChartComponent implements AfterViewInit {
   }
 
   public setData(data: BarData[], startBarIndex: number = 0) {
-    console.log('Setting chart data:', data, 'Starting at bar index:', startBarIndex);
+    console.log('Setting chart data: Starting at bar index:', startBarIndex);
 
     if (!data || data.length === 0) {
       console.error('No data provided to setData.');
