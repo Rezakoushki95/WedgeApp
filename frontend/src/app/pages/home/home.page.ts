@@ -1,4 +1,5 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
+import { Router } from '@angular/router';
 import { LightweightChartComponent } from '../../components/lightweight-chart/lightweight-chart.component';
 import { MarketDataService } from '../../services/market-data.service';
 import { TradingSessionService } from '../../services/trading-session.service';
@@ -17,7 +18,7 @@ export class HomePage {
   tradeEntryBarIndex: number | null = null; // Track the bar index where the trade started
 
 
-  constructor(private marketDataService: MarketDataService, private tradingSessionService: TradingSessionService) { }
+  constructor(private marketDataService: MarketDataService, private tradingSessionService: TradingSessionService, private router: Router) { }
 
 
   ionViewDidEnter(): void {
@@ -35,12 +36,19 @@ export class HomePage {
 
 
   private fetchActiveSession() {
-    const encodedInstrument = encodeURIComponent('S&P 500');
-    this.tradingSessionService.getSession(2, encodedInstrument).subscribe({
+    const userId = localStorage.getItem('UserId');
+    if (!userId) {
+      console.error('No user ID found. Redirecting to login...');
+      this.router.navigate(['/login']);
+      return;
+    }
+
+    const instrument = 'S&P 500'; // You can make this dynamic later if needed
+    this.tradingSessionService.getSession(+userId, instrument).subscribe({
       next: (session) => {
         if (session) {
           this.session = session;
-          console.log('Active session:', session);
+          console.log('Active session');
           this.loadDayData();
         } else {
           console.error('No active session found. Cannot load day data.');
@@ -48,9 +56,10 @@ export class HomePage {
       },
       error: (error) => {
         console.error('Error fetching session:', error);
-      }
+      },
     });
   }
+
 
   private loadDayData() {
     if (!this.session) {
