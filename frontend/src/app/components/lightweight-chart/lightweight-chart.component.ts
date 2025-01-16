@@ -37,7 +37,9 @@ export class LightweightChartComponent implements AfterViewInit {
     }
   }
 
-
+  ngOnDestroy() {
+    this.cleanup();
+  }
 
 
   public cleanup() {
@@ -105,6 +107,11 @@ export class LightweightChartComponent implements AfterViewInit {
       return;
     }
 
+    if (!this.chart || !this.candlestickSeries) {
+      console.error('Chart or candlestick series is not initialized.');
+      return;
+    }
+
     this.dayData = data.map((bar, index) => ({
       time: (index + 1) as UTCTimestamp,
       open: bar.open,
@@ -113,19 +120,11 @@ export class LightweightChartComponent implements AfterViewInit {
       close: bar.close,
     }));
 
-    this.currentBarIndex = startBarIndex > 0 ? startBarIndex : 1;
-
-    if (!this.chart || !this.candlestickSeries) {
-      console.error('Chart or candlestick series is not initialized. Retrying in 50ms...');
-      setTimeout(() => this.setData(data, startBarIndex), 50);
-      return;
-    }
-
+    this.currentBarIndex = Math.max(startBarIndex, 1);
     this.candlestickSeries.setData(this.dayData.slice(0, this.currentBarIndex));
-
-    // Adjust the viewport consistently
     this.adjustViewport();
   }
+
 
   public showNextBar() {
     if (this.currentBarIndex < this.dayData.length) {
