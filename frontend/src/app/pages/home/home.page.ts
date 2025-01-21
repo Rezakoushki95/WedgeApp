@@ -135,8 +135,7 @@ export class HomePage {
     this.tradingSessionService.completeDay(this.session.sessionId).subscribe({
       next: () => {
         console.log('Day completed. Fetching updated session...');
-        const encodedInstrument = encodeURIComponent('S&P 500');
-        this.tradingSessionService.getSession(2, encodedInstrument).subscribe((updatedSession) => {
+        this.tradingSessionService.getSession(this.session?.sessionId!, this.session!.instrument!).subscribe((updatedSession) => {
           this.session = updatedSession; // Update the session with the new day
           this.loadDayData(); // Automatically fetch and set the next day's bars
           console.log('Trading day completed successfully.');
