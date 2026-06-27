@@ -1,5 +1,4 @@
 using backend.Data;
-using backend.Services;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -29,13 +28,16 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 // Register services
 builder.Services.AddHttpClient<MarketDataService>(); // HttpClient for API calls
 builder.Services.AddScoped<MarketDataService>();
-builder.Services.AddScoped<TradingSessionService>();
-builder.Services.AddScoped<UserStatsService>();
-builder.Services.AddScoped<AccessManagementService>();
-builder.Services.AddScoped<LeaderboardService>();
 
 
 var app = builder.Build();
+
+// Ensure the database schema exists
+using (var scope = app.Services.CreateScope())
+{
+    var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    dbContext.Database.EnsureCreated();
+}
 
 // Ensure initial market data
 var marketDataService = app.Services.CreateScope().ServiceProvider.GetRequiredService<MarketDataService>();
