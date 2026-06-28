@@ -28,6 +28,9 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 // Register services
 builder.Services.AddHttpClient<MarketDataService>(); // HttpClient for API calls
 builder.Services.AddScoped<MarketDataService>();
+builder.Services.AddScoped<backend.Services.ChartService>();
+builder.Services.AddScoped<backend.Services.ScoringService>();
+builder.Services.AddScoped<backend.Services.JourneyService>();
 
 
 var app = builder.Build();

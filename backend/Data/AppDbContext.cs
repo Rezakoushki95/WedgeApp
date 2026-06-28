@@ -10,6 +10,8 @@ namespace backend.Data
         public DbSet<FiveMinuteBar> FiveMinuteBars { get; set; }
         public DbSet<MarketDataDay> MarketDataDays { get; set; }
         public DbSet<MarketDataMonth> MarketDataMonths { get; set; }
+        public DbSet<Journey> Journeys { get; set; }
+        public DbSet<Trade> Trades { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
