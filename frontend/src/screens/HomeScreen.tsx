@@ -33,6 +33,16 @@ export function HomeScreen() {
 
   useFocusEffect(useCallback(() => { load(); }, [load]));
 
+  React.useLayoutEffect(() => {
+    nav.setOptions({
+      headerRight: () => (
+        <TouchableOpacity onPress={() => nav.navigate('Ladder')}>
+          <Text style={styles.headerBtn}>Ladder</Text>
+        </TouchableOpacity>
+      ),
+    });
+  }, [nav]);
+
   const createAndPlay = async () => {
     try {
       const j = await api.createJourney({ name: 'New Journey', patternTag: '' });
@@ -91,4 +101,5 @@ const styles = StyleSheet.create({
   meta: { color: '#789', fontSize: 12, marginTop: 6 },
   fab: { backgroundColor: '#1f6feb', borderRadius: 12, padding: 16, alignItems: 'center' },
   fabText: { color: '#fff', fontSize: 16, fontWeight: '700' },
+  headerBtn: { color: '#e0b30a', fontSize: 15, fontWeight: '700' },
 });

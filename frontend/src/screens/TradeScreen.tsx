@@ -29,6 +29,9 @@ export function TradeScreen() {
   const [showMagnets, setShowMagnets] = useState(false);
   const [lastR, setLastR] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // Original-stop distance as a % of price. User's choice — no floor (a tight
+  // stop just gets hit more often). Adjustable before entry.
+  const [stopPct, setStopPct] = useState(0.004);
 
   const deal = async () => {
     setError(null);
@@ -62,9 +65,11 @@ export function TradeScreen() {
     setRevealed((r) => r + 1);
   };
 
+  const stopDist = price * stopPct;
+  const proposedStops = !position && currentBar ? [price - stopDist, price + stopDist] : [];
+
   const enter = (direction: TradeDirection) => {
     if (position || !currentBar) return;
-    const stopDist = price * 0.004; // default original stop ~0.4%; user-adjustable in a later pass
     const originalStop = direction === TradeDirection.Long ? price - stopDist : price + stopDist;
     setPosition({
       direction,
@@ -78,6 +83,15 @@ export function TradeScreen() {
   const moveStopToBreakeven = () => {
     if (!position) return;
     setPosition({ ...position, liveStop: position.entryPrice });
+  };
+
+  // Nudge the live stop toward (tighter) or away from (looser) price. Never
+  // changes R — that's anchored to the original stop.
+  const nudgeLiveStop = (tighter: boolean) => {
+    if (!position) return;
+    const step = position.entryPrice * 0.001;
+    const sign = position.direction === TradeDirection.Long ? 1 : -1;
+    setPosition({ ...position, liveStop: position.liveStop + sign * (tighter ? step : -step) });
   };
 
   const closeTrade = async (exitPrice: number, exitBarIndex: number, reason: ExitReason) => {
@@ -143,19 +157,33 @@ export function TradeScreen() {
         magnets={chart.magnets}
         entryPrice={position?.entryPrice ?? null}
         liveStop={position?.liveStop ?? null}
+        proposedStops={proposedStops}
       />
 
       <View style={styles.controls}>
         {!position ? (
-          <View style={styles.row}>
-            <Btn label="LONG" color="#26a69a" disabled={atLastBar} onPress={() => enter(TradeDirection.Long)} />
-            <Btn label="SHORT" color="#ef5350" disabled={atLastBar} onPress={() => enter(TradeDirection.Short)} />
-          </View>
+          <>
+            <View style={styles.stopRow}>
+              <Btn label="–" color="#263238" onPress={() => setStopPct((p) => Math.max(0.001, p - 0.001))} />
+              <Text style={styles.stopLabel}>Stop {(stopPct * 100).toFixed(1)}%</Text>
+              <Btn label="+" color="#263238" onPress={() => setStopPct((p) => Math.min(0.05, p + 0.001))} />
+            </View>
+            <View style={styles.row}>
+              <Btn label="LONG" color="#26a69a" disabled={atLastBar} onPress={() => enter(TradeDirection.Long)} />
+              <Btn label="SHORT" color="#ef5350" disabled={atLastBar} onPress={() => enter(TradeDirection.Short)} />
+            </View>
+          </>
         ) : (
-          <View style={styles.row}>
-            <Btn label="B/E STOP" color="#455a64" onPress={moveStopToBreakeven} />
-            <Btn label="EXIT" color="#1f6feb" onPress={() => closeTrade(price, revealed - 1, ExitReason.Manual)} />
-          </View>
+          <>
+            <View style={styles.stopRow}>
+              <Btn label="STOP –" color="#263238" onPress={() => nudgeLiveStop(true)} />
+              <Btn label="B/E" color="#455a64" onPress={moveStopToBreakeven} />
+              <Btn label="STOP +" color="#263238" onPress={() => nudgeLiveStop(false)} />
+            </View>
+            <View style={styles.row}>
+              <Btn label="EXIT" color="#1f6feb" onPress={() => closeTrade(price, revealed - 1, ExitReason.Manual)} wide />
+            </View>
+          </>
         )}
         <Btn
           label={atLastBar ? 'NEW CHART' : 'NEXT BAR ▸'}
@@ -190,6 +218,8 @@ const styles = StyleSheet.create({
   stat: { color: '#cfd8dc', fontSize: 13, fontWeight: '600' },
   controls: { padding: 12, gap: 10 },
   row: { flexDirection: 'row', gap: 10 },
+  stopRow: { flexDirection: 'row', gap: 10, alignItems: 'center', justifyContent: 'center' },
+  stopLabel: { color: '#cfd8dc', fontSize: 14, fontWeight: '600', minWidth: 90, textAlign: 'center' },
   btn: { paddingVertical: 16, borderRadius: 12, alignItems: 'center' },
   btnText: { color: '#fff', fontSize: 15, fontWeight: '700' },
 });

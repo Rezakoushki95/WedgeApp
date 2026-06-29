@@ -20,6 +20,7 @@ interface Props {
   magnets?: MagnetLevels | null;
   entryPrice?: number | null;
   liveStop?: number | null;
+  proposedStops?: number[]; // faint candidate stop lines shown before entry
 }
 
 // A naked candlestick chart (candles + optional EMA + magnet levels), rendered
@@ -33,13 +34,15 @@ export function CandleChart({
   magnets,
   entryPrice,
   liveStop,
+  proposedStops = [],
 }: Props) {
   const layout = useMemo(() => {
     if (bars.length === 0) return null;
 
     const magnetLevels = showMagnets && magnets ? collectMagnets(magnets) : [];
-    let hi = Math.max(...bars.map((b) => b.high), ...magnetLevels);
-    let lo = Math.min(...bars.map((b) => b.low), ...magnetLevels);
+    const extra = [...magnetLevels, ...proposedStops];
+    let hi = Math.max(...bars.map((b) => b.high), ...extra);
+    let lo = Math.min(...bars.map((b) => b.low), ...extra);
     if (entryPrice != null) { hi = Math.max(hi, entryPrice); lo = Math.min(lo, entryPrice); }
     if (liveStop != null) { hi = Math.max(hi, liveStop); lo = Math.min(lo, liveStop); }
 
@@ -57,7 +60,7 @@ export function CandleChart({
     const xCenter = (i: number) => padX + slot * i + slot / 2;
 
     return { hi, lo, range, slot, bodyW, y, xCenter, magnetLevels };
-  }, [bars, width, height, showMagnets, magnets, entryPrice, liveStop]);
+  }, [bars, width, height, showMagnets, magnets, entryPrice, liveStop, proposedStops]);
 
   if (!layout) return <View style={{ width, height }} />;
 
@@ -99,6 +102,11 @@ export function CandleChart({
 
       {/* EMA */}
       <Path path={emaPath} color={EMA_COLOR} style="stroke" strokeWidth={1.5} />
+
+      {/* proposed (pre-entry) stop candidates */}
+      {proposedStops.map((s, i) => (
+        <Line key={`ps${i}`} p1={vec(0, layout.y(s))} p2={vec(width, layout.y(s))} color="rgba(239,83,80,0.35)" strokeWidth={1} />
+      ))}
 
       {/* entry + live stop */}
       {entryPrice != null && (

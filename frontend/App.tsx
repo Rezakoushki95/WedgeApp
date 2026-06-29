@@ -5,6 +5,7 @@ import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { HomeScreen } from '@/screens/HomeScreen';
 import { TradeScreen } from '@/screens/TradeScreen';
+import { LadderScreen } from '@/screens/LadderScreen';
 import type { RootStackParamList } from '@/navigation';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -33,6 +34,7 @@ export default function App() {
         }}
       >
         <Stack.Screen name="Home" component={HomeScreen} options={{ title: 'Wedge' }} />
+        <Stack.Screen name="Ladder" component={LadderScreen} options={{ title: 'Edge Ladder' }} />
         <Stack.Screen
           name="Trade"
           component={TradeScreen}
