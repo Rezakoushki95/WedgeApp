@@ -4,8 +4,7 @@ import { Canvas, Path, Rect, Line, vec } from '@shopify/react-native-skia';
 import { Bar, MagnetLevels } from '@/api/types';
 import { ema } from '@/lib/priceAction';
 
-const UP = '#26a69a';
-const DOWN = '#ef5350';
+const CANDLE = '#FFFFFF'; // black & white candles: solid = up, hollow = down
 const EMA_COLOR = '#e0b30a';
 const MAGNET = 'rgba(120,144,156,0.45)';
 const STOP_COLOR = '#ef5350';
@@ -85,16 +84,24 @@ export function CandleChart({
         />
       ))}
 
-      {/* candles */}
+      {/* candles — black & white: up = solid white, down = hollow outline */}
       {bars.map((b, i) => {
-        const color = b.close >= b.open ? UP : DOWN;
+        const up = b.close >= b.open;
         const cx = layout.xCenter(i);
         const top = layout.y(Math.max(b.open, b.close));
         const bot = layout.y(Math.min(b.open, b.close));
         return (
           <React.Fragment key={i}>
-            <Line p1={vec(cx, layout.y(b.high))} p2={vec(cx, layout.y(b.low))} color={color} strokeWidth={1} />
-            <Rect x={cx - layout.bodyW / 2} y={top} width={layout.bodyW} height={Math.max(bot - top, 1)} color={color} />
+            <Line p1={vec(cx, layout.y(b.high))} p2={vec(cx, layout.y(b.low))} color={CANDLE} strokeWidth={1} />
+            <Rect
+              x={cx - layout.bodyW / 2}
+              y={top}
+              width={layout.bodyW}
+              height={Math.max(bot - top, 1)}
+              color={CANDLE}
+              style={up ? 'fill' : 'stroke'}
+              strokeWidth={1.5}
+            />
           </React.Fragment>
         );
       })}
