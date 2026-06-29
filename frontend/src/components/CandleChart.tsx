@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { View } from 'react-native';
-import { Canvas, Path, Rect, Line, Skia, vec } from '@shopify/react-native-skia';
+import { Canvas, Path, Rect, Line, vec } from '@shopify/react-native-skia';
 import { Bar, MagnetLevels } from '@/api/types';
 import { ema } from '@/lib/priceAction';
 
@@ -64,14 +64,13 @@ export function CandleChart({
 
   if (!layout) return <View style={{ width, height }} />;
 
+  // Build the EMA as an SVG path string. Passing a string to <Path path=...>
+  // lets Skia construct it internally (works on web without touching the Skia
+  // global before CanvasKit is ready).
   const emaVals = ema(bars, emaPeriod);
-  const emaPath = Skia.Path.Make();
-  emaVals.forEach((v, i) => {
-    const px = layout.xCenter(i);
-    const py = layout.y(v);
-    if (i === 0) emaPath.moveTo(px, py);
-    else emaPath.lineTo(px, py);
-  });
+  const emaPath = emaVals
+    .map((v, i) => `${i === 0 ? 'M' : 'L'}${layout.xCenter(i).toFixed(2)},${layout.y(v).toFixed(2)}`)
+    .join(' ');
 
   return (
     <Canvas style={{ width, height }}>

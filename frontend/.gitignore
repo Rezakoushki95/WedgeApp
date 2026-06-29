@@ -1,6 +1,7 @@
 node_modules/
 .expo/
 dist/
+public/canvaskit.wasm
 web-build/
 *.log
 .DS_Store
