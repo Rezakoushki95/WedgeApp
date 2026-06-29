@@ -4,11 +4,17 @@ import { Canvas, Path, Rect, Line, vec } from '@shopify/react-native-skia';
 import { Bar, MagnetLevels } from '@/api/types';
 import { ema } from '@/lib/priceAction';
 
-const CANDLE = '#FFFFFF'; // black & white candles: solid = up, hollow = down
-const EMA_COLOR = '#e0b30a';
-const MAGNET = 'rgba(120,144,156,0.45)';
-const STOP_COLOR = '#ef5350';
-const ENTRY_COLOR = '#90caf9';
+// Classic black & white candles on a white chart: up = white body, down =
+// black body, every candle has a black outline.
+const BG = '#FFFFFF';
+const UP_FILL = '#FFFFFF';
+const DOWN_FILL = '#000000';
+const BORDER = '#000000';
+const WICK = '#000000';
+const EMA_COLOR = '#1f6feb';
+const MAGNET = 'rgba(0,0,0,0.22)';
+const STOP_COLOR = '#e53935';
+const ENTRY_COLOR = '#1565c0';
 
 interface Props {
   bars: Bar[]; // revealed bars only (caller slices to currentIndex)
@@ -73,6 +79,9 @@ export function CandleChart({
 
   return (
     <Canvas style={{ width, height }}>
+      {/* white chart background */}
+      <Rect x={0} y={0} width={width} height={height} color={BG} />
+
       {/* magnet levels */}
       {layout.magnetLevels.map((lvl, i) => (
         <Line
@@ -84,24 +93,19 @@ export function CandleChart({
         />
       ))}
 
-      {/* candles — black & white: up = solid white, down = hollow outline */}
+      {/* candles — up = white body, down = black body, black outline on each */}
       {bars.map((b, i) => {
         const up = b.close >= b.open;
         const cx = layout.xCenter(i);
         const top = layout.y(Math.max(b.open, b.close));
         const bot = layout.y(Math.min(b.open, b.close));
+        const h = Math.max(bot - top, 1);
+        const x = cx - layout.bodyW / 2;
         return (
           <React.Fragment key={i}>
-            <Line p1={vec(cx, layout.y(b.high))} p2={vec(cx, layout.y(b.low))} color={CANDLE} strokeWidth={1} />
-            <Rect
-              x={cx - layout.bodyW / 2}
-              y={top}
-              width={layout.bodyW}
-              height={Math.max(bot - top, 1)}
-              color={CANDLE}
-              style={up ? 'fill' : 'stroke'}
-              strokeWidth={1.5}
-            />
+            <Line p1={vec(cx, layout.y(b.high))} p2={vec(cx, layout.y(b.low))} color={WICK} strokeWidth={1} />
+            <Rect x={x} y={top} width={layout.bodyW} height={h} color={up ? UP_FILL : DOWN_FILL} />
+            <Rect x={x} y={top} width={layout.bodyW} height={h} color={BORDER} style="stroke" strokeWidth={1} />
           </React.Fragment>
         );
       })}
