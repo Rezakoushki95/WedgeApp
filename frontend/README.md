@@ -30,27 +30,25 @@ npm run web        # or: npm run ios / npm run android
 
 The backend (../backend) must be running and seeded with market data.
 
-## Web demo
-The app runs on web (Expo + react-native-web) and was rendered live against the
-backend in a headless Chromium — the Home/list/navigation screens render
-correctly. The Skia candle chart works natively (iOS/Android have Skia built
-in); on **web** it additionally needs CanvasKit (WASM) loaded before the chart
-mounts:
+## Web demo (working)
+The app runs on web (Expo + react-native-web) and the full UI — including the
+Skia candle chart + EMA — renders live against the backend, verified in a
+headless Chromium. On web, Skia needs CanvasKit (WASM):
 
 ```bash
 npx setup-skia-web            # copies canvaskit.wasm into public/
 npm run web
 ```
 
-Known web TODO: wrap the chart with `WithSkiaWeb` (lazy-load) so the chart
-component resolves to the web Skia build after CanvasKit is ready — currently
-`Canvas`/`Path` resolve to the native build on web and miss the loaded CanvasKit
-global. Not a product blocker (native is the primary target).
+The web entry (`index.js`) loads CanvasKit, then **dynamically imports** `App`
+so the Skia modules initialise after CanvasKit is ready (a static import would
+capture an undefined CanvasKit). On native, Skia is built in and `App` is
+imported directly.
 
 `scripts/shoot.js` drives Chromium (playwright-core) to render and screenshot
-the running app — used to verify the live stack.
+the running app — used to verify the live stack end to end.
 
 ## Notes
-- The Skia chart is runtime-tested via web bundling; full device testing
-  (iOS/Android simulators) is the remaining step. The backend it talks to is
-  verified end-to-end.
+- Verified live: Home + Trade (chart, EMA, bar reveal, stop controls) render in
+  a browser against the backend. Remaining step is device testing on the
+  iOS/Android simulators. The backend is verified end-to-end.
