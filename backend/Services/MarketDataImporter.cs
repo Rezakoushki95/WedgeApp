@@ -24,14 +24,36 @@ public class MarketDataImporter
             return new ImportResult(0, 0, 0, 0);
 
         int processed = 0, skipped = 0, months = 0, bars = 0;
+        string? canonicalSymbol = null; // Fix 2: track first-seen symbol across the loop
 
         foreach (var path in Directory.GetFiles(_cacheDir, "*.json").OrderBy(p => p))
         {
             processed++;
 
-            if (!TryParseMonthFromFileName(Path.GetFileName(path), out var targetMonth))
+            var fileName = Path.GetFileName(path);
+
+            if (!TryParseMonthFromFileName(fileName, out var targetMonth))
             {
-                Console.WriteLine($"Skipping unrecognized file name: {Path.GetFileName(path)}");
+                Console.WriteLine($"Skipping unrecognized file name: {fileName}");
+                skipped++;
+                continue;
+            }
+
+            // Fix 2: extract symbol and enforce single-symbol constraint
+            if (!TryParseSymbolFromFileName(fileName, out var symbol))
+            {
+                Console.WriteLine($"Skipping unrecognized file name: {fileName}");
+                skipped++;
+                continue;
+            }
+
+            if (canonicalSymbol is null)
+            {
+                canonicalSymbol = symbol;
+            }
+            else if (symbol != canonicalSymbol)
+            {
+                Console.WriteLine($"Skipping {fileName}: cache dir contains multiple symbols; only '{canonicalSymbol}' is imported.");
                 skipped++;
                 continue;
             }
@@ -50,14 +72,14 @@ public class MarketDataImporter
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Skipping unparseable file {Path.GetFileName(path)}: {ex.Message}");
+                Console.WriteLine($"Skipping unparseable file {fileName}: {ex.Message}");
                 skipped++;
                 continue;
             }
 
             if (parsed?.TimeSeries == null || parsed.TimeSeries.Count == 0)
             {
-                Console.WriteLine($"Skipping empty file: {Path.GetFileName(path)}");
+                Console.WriteLine($"Skipping empty file: {fileName}");
                 skipped++;
                 continue;
             }
@@ -96,6 +118,7 @@ public class MarketDataImporter
             await tx.CommitAsync();
             bars += monthBars;
             months++;
+            _db.ChangeTracker.Clear(); // Fix 1: prevent entity accumulation across months (~200k entities over 120 months)
         }
 
         return new ImportResult(processed, skipped, months, bars);
@@ -110,5 +133,17 @@ public class MarketDataImporter
         if (dash < 0 || dash + 1 >= name.Length) return false;
         var datePart = name[(dash + 1)..]; // yyyy-MM
         return DateTime.TryParse(datePart + "-01", out month);
+    }
+
+    private static bool TryParseSymbolFromFileName(string fileName, out string symbol)
+    {
+        // Expected: {SYMBOL}-{yyyy-MM}.json  e.g. SPY-2020-03.json
+        // Returns the part before the first dash (the ticker symbol).
+        symbol = string.Empty;
+        var name = Path.GetFileNameWithoutExtension(fileName);
+        var dash = name.IndexOf('-');
+        if (dash < 0) return false;
+        symbol = name[..dash];
+        return symbol.Length > 0;
     }
 }
