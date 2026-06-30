@@ -40,9 +40,18 @@ if (args.Length > 0)
     {
         case "fetch":
         {
-            if (args.Length < 4)
+            if (args.Length < 4
+                || !int.TryParse(args[2], out var startYear)
+                || !int.TryParse(args[3], out var endYear))
             {
-                Console.WriteLine("Usage: dotnet run -- fetch <SYMBOL> <startYear> <endYear>");
+                Console.Error.WriteLine("Usage: dotnet run -- fetch <SYMBOL> <startYear> <endYear>");
+                Environment.Exit(1);
+                return;
+            }
+            if (startYear > endYear)
+            {
+                Console.Error.WriteLine($"startYear ({startYear}) must be <= endYear ({endYear}).");
+                Environment.Exit(1);
                 return;
             }
             var cfg = sp.GetRequiredService<IConfiguration>();
@@ -50,7 +59,7 @@ if (args.Length > 0)
                 ?? throw new InvalidOperationException("AlphaVantage:ApiKey not set (appsettings.json).");
             var http = sp.GetRequiredService<IHttpClientFactory>().CreateClient();
             var fetcher = new MarketDataFetcher(http, cacheDir, apiKey);
-            var r = await fetcher.FetchRangeAsync(args[1], int.Parse(args[2]), int.Parse(args[3]));
+            var r = await fetcher.FetchRangeAsync(args[1], startYear, endYear);
             Console.WriteLine(
                 $"fetched {r.Fetched}, skipped {r.Skipped}, " +
                 $"{(r.CapReached ? "daily cap reached" : r.RangeComplete ? "range complete" : "stopped early")}");
@@ -68,7 +77,8 @@ if (args.Length > 0)
             return;
         }
         default:
-            Console.WriteLine($"Unknown command '{args[0]}'. Commands: fetch, import.");
+            Console.Error.WriteLine($"Unknown command '{args[0]}'. Commands: fetch, import.");
+            Environment.Exit(1);
             return;
     }
 }
