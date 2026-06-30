@@ -31,6 +31,12 @@ portfolio piece (target: getting hired in Denmark — see stack rationale below)
   charts).
 - `JourneyService` — create/rename/archive journeys, submit trades (R recomputed
   server-side), pooled stats. Archiving is tombstoned (trades stay counted).
+- **Data seed pipeline** (`MarketDataFetcher` + `MarketDataImporter` + a backend
+  CLI) — pulls real SPY 5-min RTH bars from Alpha Vantage once into a gitignored
+  raw cache (`backend/data/raw/`), then rebuilds SQLite from that cache offline.
+  Real un-scaled prices, idempotent + atomic import, free-tier-aware fetch. 11
+  unit tests (real in-memory SQLite + stubbed HTTP). Replaced the old
+  `MarketDataService`/`MarketDataController` runtime-fetch path. See "Data" below.
 - Endpoints under `ChartController` / `JourneyController`. Verified against a
   seeded DB: scoring math exact, magnets/gap correct, pooled identity works.
 
@@ -75,28 +81,43 @@ Backend needs `backend/appsettings.json` (gitignored) with at least:
 { "AlphaVantage": { "ApiKey": "your-key" } }
 ```
 
-## Data — IMPORTANT (open item)
-The app currently has **no real market data** in a fresh clone. `MarketDataService`
-fetches real SPY 5-min RTH bars from **Alpha Vantage**, but:
-- It needs a (free) Alpha Vantage API key.
-- The cloud sandbox blocks all market-data hosts (egress policy), so fetching
-  must happen on a machine with network access (e.g. yours).
+## Data — seed pipeline (built) + the one manual step left
+A fresh clone still has **no real market data on disk** — but the pipeline to get
+it is now built, and the app no longer needs the API/key/network *at runtime*.
+Design/plan: `docs/superpowers/specs|plans/2026-06-30-real-data-seed-pipeline-*.md`.
 
-**Decision from research:** Alpha Vantage is the right source — it's the only
-cheap provider with 10+ years of 5-min RTH intraday via the `month=YYYY-MM`
-param, with `extended_hours=false` (RTH) and `adjusted` toggles. For a bulk
-historical pull, pay one month of the $49.99 tier (75 req/min), pull everything,
-then downgrade to free. **Redistribution caveat:** keep fetched bars as internal
-app data (gitignored seed), don't commit raw OHLCV to a public repo.
+**How it works (two isolated units + a CLI):**
+- `MarketDataFetcher` — Alpha Vantage → **verbatim** raw JSON in the gitignored
+  cache `backend/data/raw/{SYMBOL}-{yyyy-MM}.json`, one file per symbol-month.
+  Free-tier aware (≤5 req/min, stops at 25/day), skips already-cached months
+  (never re-fetches), and stops **without writing** on rate-limit/non-200/empty.
+- `MarketDataImporter` — raw cache → SQLite, fully offline. **Real un-scaled
+  prices** (the old `×10` is gone), idempotent, atomic per-month, single-symbol
+  guard. The DB is a disposable artifact rebuilt from the cache.
+- CLI on the backend: `dotnet run -- fetch SPY 2015 2025` and `dotnet run --
+  import`; web startup imports from the cache when the DB is empty.
 
-**Recommended next step (not yet built):** a seed-import path + a fetch script so
-real data is pulled once and loaded from a (gitignored) seed file — making the
-app independent of the API/key/network at runtime.
+**The one manual step (spends real API budget — not automated):**
+```bash
+# backend/appsettings.json (gitignored): { "AlphaVantage": { "ApiKey": "..." } }
+dotnet run --project backend -- fetch SPY 2015 2025   # resumable; ~25/day on free tier
+dotnet run --project backend -- import
+dotnet run --project backend                          # real SPY candles
+```
+Free tier = 25 req/day, so a full ~10y SPY pull is a few days of re-running
+`fetch` (it skips what it already has). **Redistribution caveat:** the cache + DB
+are gitignored — don't commit raw OHLCV to a public repo.
+
+**Why Alpha Vantage:** the only cheap source with 10+ years of 5-min RTH intraday
+via `month=YYYY-MM`, with `extended_hours=false` (RTH) and `adjusted` toggles. For
+a one-sitting bulk pull you could pay one month of the $49.99 tier (75 req/min),
+pull everything, then downgrade to free — the fetcher is parameterized either way.
 
 ## Suggested next steps
-1. Build seed-import + fetch script; pull real SPY/QQQ + a few large caps × ~10y
-   (`extended_hours=false`, `adjusted=false`), validate for gaps, store as
-   gitignored seed.
+1. ✅ **Done** — seed-import + fetch CLI built (see "Data" above). Remaining:
+   actually run the SPY pull on a machine with the API key (a few resumable
+   free-tier days), then optionally widen to QQQ/large caps (additive — the
+   cache filenames already carry the symbol; needs a `Symbol` column for the DB).
 2. Device-test the app on iOS/Android simulators (only web-rendered so far).
 3. Finish the design pass (chart styling / theme direction still in flux).
 4. Feature depth: journey rename/sandbox UI, pooled per-pattern Edge ladder,

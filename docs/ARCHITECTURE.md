@@ -106,7 +106,8 @@ Chasing the dollar number and chasing real skill become the same action.
 - **Frontend:** **React Native + TypeScript**, charts via `@shopify/react-native-skia`
   (GPU-accelerated custom candle rendering + smooth swipe feed). Cross-platform
   (iOS / Android / web).
-- **Backend:** **.NET / C#** (reuses the existing data-ingestion service).
+- **Backend:** **.NET / C#** (reuses the data-ingestion layer — the
+  `MarketDataFetcher`/`MarketDataImporter` seed pipeline + EF/SQLite plumbing).
 
 **Rationale (incl. the Denmark goal):** the app doubles as a portfolio piece to
 help land a job in Denmark. Market research showed Denmark is React/TypeScript-heavy
@@ -175,7 +176,7 @@ Rendering (candles, EMA, magnet levels) is client-side (Skia) for 60fps; the
 
 | Milestone | Scope |
 |---|---|
-| **M0 – Data pipeline** | Ingest historical RTH bars, slice into anonymized chart windows, precompute magnet levels. *Existing .NET `MarketDataService` already fetches & stores SPY 5-min RTH bars — reusable head start.* |
+| **M0 – Data pipeline** | Ingest historical RTH bars, slice into anonymized chart windows, precompute magnet levels. *Built: a `MarketDataFetcher` (Alpha Vantage → gitignored raw cache) + `MarketDataImporter` (cache → SQLite, offline) + a backend `fetch`/`import` CLI persist real SPY 5-min RTH bars; runtime needs no API key/network. Remaining M0 work: run the real pull, then chart-window slicing + magnet precompute.* |
 | **M1 – Replay + chart UI** | Client reveal, no rewind, trade every bar, EMA, magnet levels. "Can I play a chart." |
 | **M2 – Ledger + stops + R + Bankroll** | Honest intra-bar stop-outs, R scoring, compounding bankroll. |
 | **M3 – Journeys** | Create / rename / archive, pooled identity, Sandbox type. |
