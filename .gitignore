@@ -63,3 +63,6 @@ Thumbs.db
 
 
 /frontend/.env
+
+# Real market-data cache (fetched once, not redistributable)
+/backend/data/
