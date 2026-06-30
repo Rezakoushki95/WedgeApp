@@ -62,14 +62,17 @@ public class MarketDataImporter
                 continue;
             }
 
+            await using var tx = await _db.Database.BeginTransactionAsync();
+
             var month = new MarketDataMonth { Month = targetMonth };
             _db.MarketDataMonths.Add(month);
-            await _db.SaveChangesAsync();
+            await _db.SaveChangesAsync();   // populates month.Id; not yet durable
 
             var byDay = parsed.TimeSeries
                 .OrderBy(e => DateTime.Parse(e.Key))
                 .GroupBy(e => DateTime.Parse(e.Key).Date);
 
+            int monthBars = 0;
             foreach (var dayGroup in byDay.OrderBy(g => g.Key))
             {
                 var day = new MarketDataDay
@@ -86,10 +89,12 @@ public class MarketDataImporter
                     }).ToList()
                 };
                 _db.MarketDataDays.Add(day);
-                bars += day.FiveMinuteBars.Count;
+                monthBars += day.FiveMinuteBars.Count;
             }
 
             await _db.SaveChangesAsync();
+            await tx.CommitAsync();
+            bars += monthBars;
             months++;
         }
 
