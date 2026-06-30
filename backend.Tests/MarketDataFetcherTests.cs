@@ -1,3 +1,4 @@
+using System.Net;
 using backend.Services;
 
 namespace backend.Tests;
@@ -50,6 +51,7 @@ public class MarketDataFetcherTests : IDisposable
         var result = await fetcher.FetchRangeAsync("SPY", 2020, 2020);
 
         Assert.Equal(2, result.Fetched);
+        Assert.Equal(0, result.Skipped);
         Assert.True(result.CapReached);
         Assert.False(result.RangeComplete);
         Assert.Equal(2, Directory.GetFiles(_cacheDir, "*.json").Length);
@@ -68,5 +70,34 @@ public class MarketDataFetcherTests : IDisposable
         Assert.Equal(0, result.Fetched);
         Assert.False(result.RangeComplete);
         Assert.Empty(Directory.GetFiles(_cacheDir, "*.json"));   // nothing written
+    }
+
+    [Fact]
+    public async Task FetchRangeAsync_StopsAndDoesNotWriteOnNon200()
+    {
+        var handler = new StubHttpMessageHandler(_ =>
+            new HttpResponseMessage(HttpStatusCode.TooManyRequests));
+        var fetcher = new MarketDataFetcher(
+            new HttpClient(handler), _cacheDir, "KEY", dailyCap: 25, delay: _ => Task.CompletedTask);
+
+        var result = await fetcher.FetchRangeAsync("SPY", 2020, 2020);
+
+        Assert.Equal(0, result.Fetched);
+        Assert.False(result.RangeComplete);
+        Assert.Empty(Directory.GetFiles(_cacheDir, "*.json"));
+    }
+
+    [Fact]
+    public async Task FetchRangeAsync_StopsOnNoteRateLimit()
+    {
+        var noteBody = "{\"Note\":\"Thank you for using Alpha Vantage! Our standard API rate limit is 25 requests per day.\"}";
+        var handler = new StubHttpMessageHandler(_ => StubHttpMessageHandler.Json(noteBody));
+        var fetcher = new MarketDataFetcher(
+            new HttpClient(handler), _cacheDir, "KEY", dailyCap: 25, delay: _ => Task.CompletedTask);
+
+        var result = await fetcher.FetchRangeAsync("SPY", 2020, 2020);
+
+        Assert.Equal(0, result.Fetched);
+        Assert.Empty(Directory.GetFiles(_cacheDir, "*.json"));
     }
 }

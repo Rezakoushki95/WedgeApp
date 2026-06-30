@@ -30,6 +30,7 @@ public class MarketDataFetcher
 
     public async Task<FetchResult> FetchRangeAsync(string symbol, int startYear, int endYear)
     {
+        symbol = symbol.ToUpperInvariant();
         Directory.CreateDirectory(_cacheDir);
 
         int fetched = 0, skipped = 0;
