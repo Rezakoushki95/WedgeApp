@@ -47,7 +47,13 @@ function findBrowser() {
   await page.screenshot({ path: `${OUT}/app_home.png` });
   console.log('home shot');
 
-  // Open the first journey card -> Trade screen.
+  // Open the first journey card -> Trade screen (skip if Home is empty).
+  if ((await page.locator('[role="button"]').count()) === 0) {
+    console.warn('no journey card found (empty Home?) — skipping Trade shots');
+    await browser.close();
+    console.log('DONE');
+    return;
+  }
   const card = page.locator('[role="button"]').first();
   await card.click({ timeout: 15000 }).catch(() => {});
   await page.waitForFunction(() => /Bar \d+\/\d+/.test(document.body.innerText), { timeout: 60000 });

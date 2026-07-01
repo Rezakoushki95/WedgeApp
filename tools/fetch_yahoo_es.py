@@ -13,7 +13,8 @@ Usage:
 OUT_DIR defaults to backend/data/raw (gitignored). Then run:
     dotnet run --project backend -- import
 
-Only Python stdlib is used. Notes:
+Only Python stdlib is used (on Windows also `pip install tzdata`, since Windows
+ships no IANA timezone database for zoneinfo). Notes:
 - Filters to Regular Trading Hours (09:30-16:00 ET, weekdays), matching the app's
   RTH premise and Al Brooks' day-session charts.
 - Drops null bars and any non-5-minute-aligned bar (Yahoo's live/partial candle).
@@ -58,7 +59,9 @@ def is_aligned(dt):
 
 def build_months(chart):
     res = chart["chart"]["result"][0]
-    ts = res["timestamp"]
+    ts = res.get("timestamp")
+    if not ts:
+        return collections.defaultdict(dict), 0, 0
     q = res["indicators"]["quote"][0]
     vol = q.get("volume", [None] * len(ts))
     months = collections.defaultdict(dict)
@@ -89,6 +92,9 @@ def main():
     chart = fetch_chart()
     if chart.get("chart", {}).get("error"):
         print("Yahoo error:", chart["chart"]["error"], file=sys.stderr)
+        return 1
+    if not chart.get("chart", {}).get("result"):
+        print("Yahoo returned no data (market closed / ticker unavailable?)", file=sys.stderr)
         return 1
     months, kept, skipped = build_months(chart)
     os.makedirs(out_dir, exist_ok=True)
