@@ -16,10 +16,5 @@ public class MarketDataDay
 
     [JsonIgnore]
     public MarketDataMonth MarketDataMonth { get; set; } = null!;
-
-    // Collection of AccessedDay entries for tracking
-    [JsonIgnore]
-    public ICollection<AccessedDay> AccessedDays { get; set; } = new List<AccessedDay>();
-
 }
 
