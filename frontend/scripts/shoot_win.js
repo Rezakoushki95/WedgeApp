@@ -50,7 +50,7 @@ function findBrowser() {
   // Open the first journey card -> Trade screen (skip if Home is empty).
   // Note: react-native-web 0.21+ no longer emits role="button" on touchables,
   // so locate the card by its bankroll text instead.
-  const card = page.getByText(/^\$[\d,]+$/).first();
+  const card = page.getByText(/\$[\d,]+/).first();
   if ((await card.count()) === 0) {
     console.warn('no journey card found (empty Home?) — skipping Trade shots');
     await browser.close();

@@ -13,7 +13,7 @@
     "plugins": [
       [
         "expo-splash-screen",
-        { "backgroundColor": "#0B0E11" }
+        { "backgroundColor": "#0B0E11", "resizeMode": "contain" }
       ]
     ]
   }
