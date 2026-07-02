@@ -84,14 +84,19 @@ export function CandleChart({
     // locationY is reliable on native; react-native-web's Pressable click
     // events don't populate it (NaN/undefined) but carry the DOM offsetY.
     const ne = e.nativeEvent;
-    const y = Number.isFinite(ne.locationY) ? (ne.locationY as number) : ne.offsetY;
-    if (y == null || !Number.isFinite(y)) return;
+    const raw = Number.isFinite(ne.locationY) ? (ne.locationY as number) : ne.offsetY;
+    if (raw == null || !Number.isFinite(raw)) return;
+    // Clamp to the canvas so edge taps (or native hit-area inflation) can't
+    // produce a price beyond the rendered range.
+    const y = Math.min(Math.max(raw, 0), height);
     const { hi, range } = layout;
     onPriceTap(hi - (y / height) * range);
   };
 
   return (
-    <Pressable onPress={handlePress} disabled={!onPriceTap}>
+    // Explicit size pins the Pressable's layout box to the canvas so the
+    // native locationY origin is deterministically the chart's top-left.
+    <Pressable onPress={handlePress} disabled={!onPriceTap} style={{ width, height }}>
       <Canvas style={{ width, height }}>
         {/* white chart background */}
         <Rect x={0} y={0} width={width} height={height} color={BG} />
