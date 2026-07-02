@@ -85,6 +85,7 @@ function findBrowser() {
   await page.waitForFunction(() => /Tap the chart to place your stop/.test(document.body.innerText), { timeout: 10000 });
   const canvas = page.locator('canvas').first();
   const box = await canvas.boundingBox();
+  if (!box) throw new Error('chart canvas has no bounding box — is the Trade screen rendered?');
   await page.mouse.click(box.x + box.width * 0.5, box.y + box.height * 0.9); // near bottom = well below price
   await page.waitForFunction(() => /ENTER LONG/.test(document.body.innerText), { timeout: 10000 });
   await page.screenshot({ path: `${OUT}/app_stop_placed.png` });

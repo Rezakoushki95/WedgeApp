@@ -51,6 +51,7 @@ export function TradeScreen() {
     setLastR(null);
     setArming(null);
     setPendingStop(null);
+    setHint(null);
     try {
       const c = await api.dealChart();
       setChart(c);
