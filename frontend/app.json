@@ -5,14 +5,16 @@
     "version": "0.1.0",
     "orientation": "portrait",
     "userInterfaceStyle": "dark",
-    "newArchEnabled": true,
-    "splash": {
-      "backgroundColor": "#0B0E11"
-    },
     "ios": { "supportsTablet": true },
     "android": {
       "adaptiveIcon": { "backgroundColor": "#0B0E11" }
     },
-    "web": { "bundler": "metro" }
+    "web": { "bundler": "metro" },
+    "plugins": [
+      [
+        "expo-splash-screen",
+        { "backgroundColor": "#0B0E11" }
+      ]
+    ]
   }
 }

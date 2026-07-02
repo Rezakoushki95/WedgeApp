@@ -38,9 +38,9 @@ function findBrowser() {
 
   await page.goto(APP_URL, { waitUntil: 'load', timeout: 180000 });
 
-  // Wait for Home to render either a journey card or its empty state.
+  // Wait for Home to render either a journey card (shows a $ bankroll) or its empty state.
   await page.waitForFunction(
-    () => /Bar \d+\/\d+/.test(document.body.innerText) || document.querySelectorAll('[role="button"]').length > 0 || /No journeys yet/.test(document.body.innerText),
+    () => /\$[\d,]+/.test(document.body.innerText) || /No journeys yet/.test(document.body.innerText),
     { timeout: 180000 }
   );
   await sleep(1500);
@@ -48,13 +48,15 @@ function findBrowser() {
   console.log('home shot');
 
   // Open the first journey card -> Trade screen (skip if Home is empty).
-  if ((await page.locator('[role="button"]').count()) === 0) {
+  // Note: react-native-web 0.21+ no longer emits role="button" on touchables,
+  // so locate the card by its bankroll text instead.
+  const card = page.getByText(/^\$[\d,]+$/).first();
+  if ((await card.count()) === 0) {
     console.warn('no journey card found (empty Home?) — skipping Trade shots');
     await browser.close();
     console.log('DONE');
     return;
   }
-  const card = page.locator('[role="button"]').first();
   await card.click({ timeout: 15000 }).catch(() => {});
   await page.waitForFunction(() => /Bar \d+\/\d+/.test(document.body.innerText), { timeout: 60000 });
   await sleep(1500);

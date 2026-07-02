@@ -66,3 +66,6 @@ Thumbs.db
 
 # Real market-data cache (fetched once, not redistributable)
 /backend/data/
+
+# Python bytecode
+__pycache__/
