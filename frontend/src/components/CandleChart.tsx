@@ -79,10 +79,15 @@ export function CandleChart({
     .map((v, i) => `${i === 0 ? 'M' : 'L'}${layout.xCenter(i).toFixed(2)},${layout.y(v).toFixed(2)}`)
     .join(' ');
 
-  const handlePress = (e: { nativeEvent: { locationY: number } }) => {
+  const handlePress = (e: { nativeEvent: { locationY?: number; offsetY?: number } }) => {
     if (!onPriceTap || !layout) return;
+    // locationY is reliable on native; react-native-web's Pressable click
+    // events don't populate it (NaN/undefined) but carry the DOM offsetY.
+    const ne = e.nativeEvent;
+    const y = Number.isFinite(ne.locationY) ? (ne.locationY as number) : ne.offsetY;
+    if (y == null || !Number.isFinite(y)) return;
     const { hi, range } = layout;
-    onPriceTap(hi - (e.nativeEvent.locationY / height) * range);
+    onPriceTap(hi - (y / height) * range);
   };
 
   return (
