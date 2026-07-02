@@ -79,6 +79,29 @@ function findBrowser() {
   await page.screenshot({ path: `${OUT}/app_trade_revealed.png` });
   console.log('trade-revealed shot');
 
+  // Scripted trade: arm LONG -> tap low on the chart (valid long stop) ->
+  // ENTER LONG -> reveal a few bars -> EXIT. Exercises the whole new flow.
+  await page.getByText('LONG', { exact: true }).first().click();
+  await page.waitForFunction(() => /Tap the chart to place your stop/.test(document.body.innerText), { timeout: 10000 });
+  const canvas = page.locator('canvas').first();
+  const box = await canvas.boundingBox();
+  await page.mouse.click(box.x + box.width * 0.5, box.y + box.height * 0.9); // near bottom = well below price
+  await page.waitForFunction(() => /ENTER LONG/.test(document.body.innerText), { timeout: 10000 });
+  await page.screenshot({ path: `${OUT}/app_stop_placed.png` });
+  console.log('stop-placed shot');
+  await page.getByText('ENTER LONG', { exact: true }).first().click();
+  await page.waitForFunction(() => /Open [+-]/.test(document.body.innerText), { timeout: 10000 });
+  for (let i = 0; i < 5; i++) {
+    const next = page.getByText(/NEXT BAR/i);
+    if (!(await next.count())) break;
+    await next.first().click({ timeout: 5000 }).catch(() => {});
+    await sleep(80);
+  }
+  await page.getByText('EXIT', { exact: true }).first().click();
+  await page.waitForFunction(() => /Closed [+-]/.test(document.body.innerText), { timeout: 10000 });
+  await page.screenshot({ path: `${OUT}/app_trade_closed.png` });
+  console.log('trade-closed shot:', await page.evaluate(() => (document.body.innerText.match(/Closed [+-][\d.]+R/) || [])[0]));
+
   await browser.close();
   console.log('DONE');
 })().catch((e) => { console.error('FAILED:', e.message); process.exit(1); });

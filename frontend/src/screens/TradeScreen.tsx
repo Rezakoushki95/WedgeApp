@@ -5,6 +5,7 @@ import { api } from '@/api/client';
 import { CandleChart } from '@/components/CandleChart';
 import { DealtChart, ExitReason, TradeDirection } from '@/api/types';
 import { computeR, openR, stopHit } from '@/lib/priceAction';
+import { isValidStopSide, revalidatePendingStop } from '@/lib/stopPlacement';
 import { RISK_FRACTION } from '@/config';
 import type { RootStackParamList } from '@/navigation';
 
@@ -29,14 +30,27 @@ export function TradeScreen() {
   const [showMagnets, setShowMagnets] = useState(false);
   const [lastR, setLastR] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
-  // Original-stop distance as a % of price. User's choice — no floor (a tight
-  // stop just gets hit more often). Adjustable before entry.
-  const [stopPct, setStopPct] = useState(0.004);
+  // Arm-then-place: pick a direction, then tap the chart to place the stop.
+  // ENTER only exists once a valid stop is placed — entry without a stop is
+  // impossible by construction.
+  const [arming, setArming] = useState<TradeDirection | null>(null);
+  const [pendingStop, setPendingStop] = useState<number | null>(null);
+  const [hint, setHint] = useState<string | null>(null);
+
+  const hintTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+  const flashHint = (msg: string) => {
+    setHint(msg);
+    if (hintTimer.current) clearTimeout(hintTimer.current);
+    hintTimer.current = setTimeout(() => setHint(null), 2500);
+  };
+  useEffect(() => () => { if (hintTimer.current) clearTimeout(hintTimer.current); }, []);
 
   const deal = async () => {
     setError(null);
     setPosition(null);
     setLastR(null);
+    setArming(null);
+    setPendingStop(null);
     try {
       const c = await api.dealChart();
       setChart(c);
@@ -62,22 +76,51 @@ export function TradeScreen() {
     if (position && stopHit(position.direction, position.liveStop, nb)) {
       closeTrade(position.liveStop, nextIdx, ExitReason.Stop);
     }
+    if (arming != null && pendingStop != null) {
+      const kept = revalidatePendingStop(arming, pendingStop, nb.close);
+      if (kept == null) {
+        setPendingStop(null);
+        flashHint('Price crossed your stop level — place it again');
+      }
+    }
     setRevealed((r) => r + 1);
   };
 
-  const stopDist = price * stopPct;
-  const proposedStops = !position && currentBar ? [price - stopDist, price + stopDist] : [];
+  const arm = (direction: TradeDirection) => {
+    if (position) return;
+    setArming(direction);
+    setPendingStop(null);
+  };
 
-  const enter = (direction: TradeDirection) => {
-    if (position || !currentBar) return;
-    const originalStop = direction === TradeDirection.Long ? price - stopDist : price + stopDist;
+  const cancelArming = () => {
+    setArming(null);
+    setPendingStop(null);
+    setHint(null);
+  };
+
+  const onPriceTap = (tapped: number) => {
+    if (arming == null || position || !currentBar) return;
+    if (isValidStopSide(arming, tapped, price)) {
+      setPendingStop(tapped);
+    } else {
+      flashHint(arming === TradeDirection.Long
+        ? 'Long stop must be below price'
+        : 'Short stop must be above price');
+    }
+  };
+
+  const confirmEntry = () => {
+    if (arming == null || pendingStop == null || position || !currentBar) return;
     setPosition({
-      direction,
+      direction: arming,
       entryBarIndex: revealed - 1,
       entryPrice: price,
-      originalStop,
-      liveStop: originalStop,
+      originalStop: pendingStop,
+      liveStop: pendingStop,
     });
+    setArming(null);
+    setPendingStop(null);
+    setHint(null);
   };
 
   const moveStopToBreakeven = () => {
@@ -157,22 +200,36 @@ export function TradeScreen() {
         magnets={chart.magnets}
         entryPrice={position?.entryPrice ?? null}
         liveStop={position?.liveStop ?? null}
-        proposedStops={proposedStops}
+        pendingStop={pendingStop}
+        onPriceTap={onPriceTap}
       />
 
       <View style={styles.controls}>
         {!position ? (
-          <>
-            <View style={styles.stopRow}>
-              <Btn label="–" color="#263238" onPress={() => setStopPct((p) => Math.max(0.001, p - 0.001))} />
-              <Text style={styles.stopLabel}>Stop {(stopPct * 100).toFixed(1)}%</Text>
-              <Btn label="+" color="#263238" onPress={() => setStopPct((p) => Math.min(0.05, p + 0.001))} />
-            </View>
+          arming == null ? (
             <View style={styles.row}>
-              <Btn label="LONG" color="#26a69a" disabled={atLastBar} onPress={() => enter(TradeDirection.Long)} />
-              <Btn label="SHORT" color="#ef5350" disabled={atLastBar} onPress={() => enter(TradeDirection.Short)} />
+              <Btn label="LONG" color="#26a69a" disabled={atLastBar} onPress={() => arm(TradeDirection.Long)} />
+              <Btn label="SHORT" color="#ef5350" disabled={atLastBar} onPress={() => arm(TradeDirection.Short)} />
             </View>
-          </>
+          ) : (
+            <>
+              <Text style={styles.hint}>
+                {hint ?? (pendingStop == null
+                  ? 'Tap the chart to place your stop'
+                  : `Stop ${pendingStop.toFixed(2)} · ${(Math.abs(price - pendingStop) / price * 100).toFixed(2)}% ${arming === TradeDirection.Long ? 'below' : 'above'}`)}
+              </Text>
+              <View style={styles.row}>
+                {pendingStop != null && (
+                  <Btn
+                    label={arming === TradeDirection.Long ? 'ENTER LONG' : 'ENTER SHORT'}
+                    color={arming === TradeDirection.Long ? '#26a69a' : '#ef5350'}
+                    onPress={confirmEntry}
+                  />
+                )}
+                <Btn label="CANCEL" color="#455a64" onPress={cancelArming} />
+              </View>
+            </>
+          )
         ) : (
           <>
             <View style={styles.stopRow}>
@@ -219,7 +276,7 @@ const styles = StyleSheet.create({
   controls: { padding: 12, gap: 10 },
   row: { flexDirection: 'row', gap: 10 },
   stopRow: { flexDirection: 'row', gap: 10, alignItems: 'center', justifyContent: 'center' },
-  stopLabel: { color: '#cfd8dc', fontSize: 14, fontWeight: '600', minWidth: 90, textAlign: 'center' },
+  hint: { color: '#e0b30a', fontSize: 13, fontWeight: '600', textAlign: 'center' },
   btn: { paddingVertical: 16, borderRadius: 12, alignItems: 'center' },
   btnText: { color: '#fff', fontSize: 15, fontWeight: '700' },
 });
