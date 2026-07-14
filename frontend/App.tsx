@@ -1,6 +1,7 @@
 import 'react-native-gesture-handler';
 import React from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { SafeAreaProvider, initialWindowMetrics } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -26,24 +27,26 @@ const theme = {
 export default function App() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <NavigationContainer theme={theme}>
-        <StatusBar style="light" />
-        <Stack.Navigator
-          screenOptions={{
-            headerStyle: { backgroundColor: '#0B0E11' },
-            headerTintColor: '#fff',
-            contentStyle: { backgroundColor: '#0B0E11' },
-          }}
-        >
-          <Stack.Screen name="Home" component={HomeScreen} options={{ title: 'Wedge' }} />
-          <Stack.Screen name="Ladder" component={LadderScreen} options={{ title: 'Edge Ladder' }} />
-          <Stack.Screen
-            name="Trade"
-            component={TradeScreen}
-            options={({ route }) => ({ title: route.params.journeyName })}
-          />
-        </Stack.Navigator>
-      </NavigationContainer>
+      <SafeAreaProvider initialMetrics={initialWindowMetrics}>
+        <NavigationContainer theme={theme}>
+          <StatusBar style="light" />
+          <Stack.Navigator
+            screenOptions={{
+              headerStyle: { backgroundColor: '#0B0E11' },
+              headerTintColor: '#fff',
+              contentStyle: { backgroundColor: '#0B0E11' },
+            }}
+          >
+            <Stack.Screen name="Home" component={HomeScreen} options={{ title: 'Wedge' }} />
+            <Stack.Screen name="Ladder" component={LadderScreen} options={{ title: 'Edge Ladder' }} />
+            <Stack.Screen
+              name="Trade"
+              component={TradeScreen}
+              options={({ route }) => ({ title: route.params.journeyName })}
+            />
+          </Stack.Navigator>
+        </NavigationContainer>
+      </SafeAreaProvider>
     </GestureHandlerRootView>
   );
 }
