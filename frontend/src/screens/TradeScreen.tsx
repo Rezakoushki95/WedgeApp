@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, useWindowDimensions, ActivityIndicator } from 'react-native';
 import { useRoute, type RouteProp } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { api } from '@/api/client';
 import { CandleChart } from '@/components/CandleChart';
 import { DealtChart, ExitReason, TradeDirection } from '@/api/types';
@@ -23,6 +24,11 @@ export function TradeScreen() {
   const route = useRoute<RouteProp<RootStackParamList, 'Trade'>>();
   const { journeyId } = route.params;
   const { width } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
+  // The chart fills whatever space is left between the stats bar and the
+  // controls, measured via onLayout. Hardcoding a height clipped the bottom
+  // controls off-screen on shorter devices (e.g. iOS Display Zoom).
+  const [chartH, setChartH] = useState(360);
 
   const [chart, setChart] = useState<DealtChart | null>(null);
   const [revealed, setRevealed] = useState(1); // bars shown (never decreases)
@@ -193,19 +199,24 @@ export function TradeScreen() {
         </TouchableOpacity>
       </View>
 
-      <CandleChart
-        bars={visible}
-        width={width}
-        height={360}
-        showMagnets={showMagnets}
-        magnets={chart.magnets}
-        entryPrice={position?.entryPrice ?? null}
-        liveStop={position?.liveStop ?? null}
-        pendingStop={pendingStop}
-        onPriceTap={onPriceTap}
-      />
+      <View
+        style={styles.chartArea}
+        onLayout={(e) => setChartH(e.nativeEvent.layout.height)}
+      >
+        <CandleChart
+          bars={visible}
+          width={width}
+          height={chartH}
+          showMagnets={showMagnets}
+          magnets={chart.magnets}
+          entryPrice={position?.entryPrice ?? null}
+          liveStop={position?.liveStop ?? null}
+          pendingStop={pendingStop}
+          onPriceTap={onPriceTap}
+        />
+      </View>
 
-      <View style={styles.controls}>
+      <View style={[styles.controls, { paddingBottom: 12 + insets.bottom }]}>
         {!position ? (
           arming == null ? (
             <View style={styles.row}>
@@ -243,12 +254,14 @@ export function TradeScreen() {
             </View>
           </>
         )}
-        <Btn
-          label={atLastBar ? 'NEW CHART' : 'NEXT BAR ▸'}
-          color="#263238"
-          onPress={atLastBar ? deal : nextBar}
-          wide
-        />
+        <View style={styles.row}>
+          <Btn
+            label={atLastBar ? 'NEW CHART' : 'NEXT BAR ▸'}
+            color="#263238"
+            onPress={atLastBar ? deal : nextBar}
+            wide
+          />
+        </View>
       </View>
     </View>
   );
@@ -273,6 +286,7 @@ const styles = StyleSheet.create({
   center: { flex: 1, backgroundColor: '#0B0E11', alignItems: 'center', justifyContent: 'center' },
   error: { color: '#ef5350', padding: 16, textAlign: 'center' },
   statsBar: { flexDirection: 'row', justifyContent: 'space-between', padding: 12, alignItems: 'center' },
+  chartArea: { flex: 1, overflow: 'hidden' },
   stat: { color: '#cfd8dc', fontSize: 13, fontWeight: '600' },
   controls: { padding: 12, gap: 10 },
   row: { flexDirection: 'row', gap: 10 },
