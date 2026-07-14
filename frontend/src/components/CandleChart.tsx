@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import { View } from 'react-native';
+import { GestureDetector, Gesture } from 'react-native-gesture-handler';
 import { Canvas, Path, Rect, Line, vec } from '@shopify/react-native-skia';
 import { Bar, MagnetLevels } from '@/api/types';
 import { ema } from '@/lib/priceAction';
@@ -25,7 +26,8 @@ interface Props {
   magnets?: MagnetLevels | null;
   entryPrice?: number | null;
   liveStop?: number | null;
-  proposedStops?: number[]; // faint candidate stop lines shown before entry
+  pendingStop?: number | null; // placed-but-unentered stop (Armed/Placed state)
+  onPriceTap?: (price: number) => void; // tap on the chart -> price at that y
 }
 
 // A naked candlestick chart (candles + optional EMA + magnet levels), rendered
@@ -39,17 +41,18 @@ export function CandleChart({
   magnets,
   entryPrice,
   liveStop,
-  proposedStops = [],
+  pendingStop,
+  onPriceTap,
 }: Props) {
   const layout = useMemo(() => {
     if (bars.length === 0) return null;
 
     const magnetLevels = showMagnets && magnets ? collectMagnets(magnets) : [];
-    const extra = [...magnetLevels, ...proposedStops];
-    let hi = Math.max(...bars.map((b) => b.high), ...extra);
-    let lo = Math.min(...bars.map((b) => b.low), ...extra);
+    let hi = Math.max(...bars.map((b) => b.high), ...magnetLevels);
+    let lo = Math.min(...bars.map((b) => b.low), ...magnetLevels);
     if (entryPrice != null) { hi = Math.max(hi, entryPrice); lo = Math.min(lo, entryPrice); }
     if (liveStop != null) { hi = Math.max(hi, liveStop); lo = Math.min(lo, liveStop); }
+    if (pendingStop != null) { hi = Math.max(hi, pendingStop); lo = Math.min(lo, pendingStop); }
 
     const pad = (hi - lo) * 0.08 || 1;
     hi += pad;
@@ -65,7 +68,7 @@ export function CandleChart({
     const xCenter = (i: number) => padX + slot * i + slot / 2;
 
     return { hi, lo, range, slot, bodyW, y, xCenter, magnetLevels };
-  }, [bars, width, height, showMagnets, magnets, entryPrice, liveStop, proposedStops]);
+  }, [bars, width, height, showMagnets, magnets, entryPrice, liveStop, pendingStop]);
 
   if (!layout) return <View style={{ width, height }} />;
 
@@ -77,55 +80,82 @@ export function CandleChart({
     .map((v, i) => `${i === 0 ? 'M' : 'L'}${layout.xCenter(i).toFixed(2)},${layout.y(v).toFixed(2)}`)
     .join(' ');
 
+  // Convert a tap y-coordinate (relative to the canvas top-left) into a price.
+  // The Skia <Canvas> intercepts native touches, so a parent Pressable never
+  // fires on iOS — a gesture-handler Tap on the wrapping View gets them instead
+  // (and still fires for the web E2E's DOM click). e.y is canvas-relative.
+  const handleTapY = (rawY?: number) => {
+    if (!onPriceTap || !layout || rawY == null || !Number.isFinite(rawY)) return;
+    // Clamp to the canvas so edge taps (or native hit-area inflation) can't
+    // produce a price beyond the rendered range.
+    const y = Math.min(Math.max(rawY, 0), height);
+    const { hi, range } = layout;
+    onPriceTap(hi - (y / height) * range);
+  };
+
+  // runOnJS(true): reanimated's worklets plugin is active, so gesture callbacks
+  // run on the UI thread by default; force this one to JS so it can call the
+  // React state setters inside onPriceTap.
+  const tap = Gesture.Tap()
+    .enabled(!!onPriceTap)
+    .runOnJS(true)
+    .onEnd((e) => handleTapY(e.y));
+
   return (
-    <Canvas style={{ width, height }}>
-      {/* white chart background */}
-      <Rect x={0} y={0} width={width} height={height} color={BG} />
+    // Explicit size pins the gesture/layout box to the canvas so the tap
+    // y-origin is deterministically the chart's top-left.
+    <GestureDetector gesture={tap}>
+      <View style={{ width, height }}>
+      <Canvas style={{ width, height }}>
+        {/* white chart background */}
+        <Rect x={0} y={0} width={width} height={height} color={BG} />
 
-      {/* magnet levels */}
-      {layout.magnetLevels.map((lvl, i) => (
-        <Line
-          key={`m${i}`}
-          p1={vec(0, layout.y(lvl))}
-          p2={vec(width, layout.y(lvl))}
-          color={MAGNET}
-          strokeWidth={1}
-        />
-      ))}
+        {/* magnet levels */}
+        {layout.magnetLevels.map((lvl, i) => (
+          <Line
+            key={`m${i}`}
+            p1={vec(0, layout.y(lvl))}
+            p2={vec(width, layout.y(lvl))}
+            color={MAGNET}
+            strokeWidth={1}
+          />
+        ))}
 
-      {/* candles — up = white body, down = black body, black outline on each */}
-      {bars.map((b, i) => {
-        const up = b.close >= b.open;
-        const cx = layout.xCenter(i);
-        const top = layout.y(Math.max(b.open, b.close));
-        const bot = layout.y(Math.min(b.open, b.close));
-        const h = Math.max(bot - top, 1);
-        const x = cx - layout.bodyW / 2;
-        return (
-          <React.Fragment key={i}>
-            <Line p1={vec(cx, layout.y(b.high))} p2={vec(cx, layout.y(b.low))} color={WICK} strokeWidth={1} />
-            <Rect x={x} y={top} width={layout.bodyW} height={h} color={up ? UP_FILL : DOWN_FILL} />
-            <Rect x={x} y={top} width={layout.bodyW} height={h} color={BORDER} style="stroke" strokeWidth={1} />
-          </React.Fragment>
-        );
-      })}
+        {/* candles — up = white body, down = black body, black outline on each */}
+        {bars.map((b, i) => {
+          const up = b.close >= b.open;
+          const cx = layout.xCenter(i);
+          const top = layout.y(Math.max(b.open, b.close));
+          const bot = layout.y(Math.min(b.open, b.close));
+          const h = Math.max(bot - top, 1);
+          const x = cx - layout.bodyW / 2;
+          return (
+            <React.Fragment key={i}>
+              <Line p1={vec(cx, layout.y(b.high))} p2={vec(cx, layout.y(b.low))} color={WICK} strokeWidth={1} />
+              <Rect x={x} y={top} width={layout.bodyW} height={h} color={up ? UP_FILL : DOWN_FILL} />
+              <Rect x={x} y={top} width={layout.bodyW} height={h} color={BORDER} style="stroke" strokeWidth={1} />
+            </React.Fragment>
+          );
+        })}
 
-      {/* EMA */}
-      <Path path={emaPath} color={EMA_COLOR} style="stroke" strokeWidth={1.5} />
+        {/* EMA */}
+        <Path path={emaPath} color={EMA_COLOR} style="stroke" strokeWidth={1.5} />
 
-      {/* proposed (pre-entry) stop candidates */}
-      {proposedStops.map((s, i) => (
-        <Line key={`ps${i}`} p1={vec(0, layout.y(s))} p2={vec(width, layout.y(s))} color="rgba(239,83,80,0.35)" strokeWidth={1} />
-      ))}
+        {/* placed-but-unentered stop (Armed/Placed) */}
+        {pendingStop != null && (
+          <Line p1={vec(0, layout.y(pendingStop))} p2={vec(width, layout.y(pendingStop))} color={STOP_COLOR} strokeWidth={1} />
+        )}
 
-      {/* entry + live stop */}
-      {entryPrice != null && (
-        <Line p1={vec(0, layout.y(entryPrice))} p2={vec(width, layout.y(entryPrice))} color={ENTRY_COLOR} strokeWidth={1} />
-      )}
-      {liveStop != null && (
-        <Line p1={vec(0, layout.y(liveStop))} p2={vec(width, layout.y(liveStop))} color={STOP_COLOR} strokeWidth={1} />
-      )}
-    </Canvas>
+        {/* entry + live stop */}
+        {entryPrice != null && (
+          <Line p1={vec(0, layout.y(entryPrice))} p2={vec(width, layout.y(entryPrice))} color={ENTRY_COLOR} strokeWidth={1} />
+        )}
+        {liveStop != null && (
+          <Line p1={vec(0, layout.y(liveStop))} p2={vec(width, layout.y(liveStop))} color={STOP_COLOR} strokeWidth={1} />
+        )}
+      </Canvas>
+      </View>
+    </GestureDetector>
   );
 }
 
