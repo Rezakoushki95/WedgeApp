@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
-import { View, Pressable } from 'react-native';
+import { View } from 'react-native';
+import { GestureDetector, Gesture } from 'react-native-gesture-handler';
 import { Canvas, Path, Rect, Line, vec } from '@shopify/react-native-skia';
 import { Bar, MagnetLevels } from '@/api/types';
 import { ema } from '@/lib/priceAction';
@@ -79,24 +80,32 @@ export function CandleChart({
     .map((v, i) => `${i === 0 ? 'M' : 'L'}${layout.xCenter(i).toFixed(2)},${layout.y(v).toFixed(2)}`)
     .join(' ');
 
-  const handlePress = (e: { nativeEvent: { locationY?: number; offsetY?: number } }) => {
-    if (!onPriceTap || !layout) return;
-    // locationY is reliable on native; react-native-web's Pressable click
-    // events don't populate it (NaN/undefined) but carry the DOM offsetY.
-    const ne = e.nativeEvent;
-    const raw = Number.isFinite(ne.locationY) ? (ne.locationY as number) : ne.offsetY;
-    if (raw == null || !Number.isFinite(raw)) return;
+  // Convert a tap y-coordinate (relative to the canvas top-left) into a price.
+  // The Skia <Canvas> intercepts native touches, so a parent Pressable never
+  // fires on iOS — a gesture-handler Tap on the wrapping View gets them instead
+  // (and still fires for the web E2E's DOM click). e.y is canvas-relative.
+  const handleTapY = (rawY?: number) => {
+    if (!onPriceTap || !layout || rawY == null || !Number.isFinite(rawY)) return;
     // Clamp to the canvas so edge taps (or native hit-area inflation) can't
     // produce a price beyond the rendered range.
-    const y = Math.min(Math.max(raw, 0), height);
+    const y = Math.min(Math.max(rawY, 0), height);
     const { hi, range } = layout;
     onPriceTap(hi - (y / height) * range);
   };
 
+  // runOnJS(true): reanimated's worklets plugin is active, so gesture callbacks
+  // run on the UI thread by default; force this one to JS so it can call the
+  // React state setters inside onPriceTap.
+  const tap = Gesture.Tap()
+    .enabled(!!onPriceTap)
+    .runOnJS(true)
+    .onEnd((e) => handleTapY(e.y));
+
   return (
-    // Explicit size pins the Pressable's layout box to the canvas so the
-    // native locationY origin is deterministically the chart's top-left.
-    <Pressable onPress={handlePress} disabled={!onPriceTap} style={{ width, height }}>
+    // Explicit size pins the gesture/layout box to the canvas so the tap
+    // y-origin is deterministically the chart's top-left.
+    <GestureDetector gesture={tap}>
+      <View style={{ width, height }}>
       <Canvas style={{ width, height }}>
         {/* white chart background */}
         <Rect x={0} y={0} width={width} height={height} color={BG} />
@@ -145,7 +154,8 @@ export function CandleChart({
           <Line p1={vec(0, layout.y(liveStop))} p2={vec(width, layout.y(liveStop))} color={STOP_COLOR} strokeWidth={1} />
         )}
       </Canvas>
-    </Pressable>
+      </View>
+    </GestureDetector>
   );
 }
 
